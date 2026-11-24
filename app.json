@@ -27,7 +27,13 @@
     },
     "plugins": [
       "expo-router",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Allow SONORA to access the microphone for voice-guided wallet navigation."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

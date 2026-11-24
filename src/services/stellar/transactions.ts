@@ -9,9 +9,10 @@ import { getHorizonServer } from './client';
  * Transaction Service Foundation
  *
  * SECURITY ENFORCEMENT:
- * - Real signing is NOT implemented in Phase 1.
- * - Transactions require explicit user confirmation.
+ * - Real signing is NOT implemented in Phase 1 / Phase 1.1.
+ * - Transactions require explicit user confirmation before signing.
  * - Testnet Horizon only.
+ * - No fake transaction success responses.
  */
 
 export interface TransactionBuilderInput {
@@ -51,15 +52,33 @@ export async function prepareTransaction(
 }
 
 /**
+ * Validates a 64-character hexadecimal transaction hash
+ */
+export function isValidTransactionHash(hash: string): boolean {
+  return /^[0-9a-fA-F]{64}$/.test(hash.trim());
+}
+
+/**
  * Transaction Verification Interface
- * Checks transaction status on Stellar Testnet by hash
+ * Checks real transaction status on Stellar Testnet by hash.
+ * Never returns a fake success response.
  */
 export async function verifyTransactionByHash(
   txHash: string
 ): Promise<TransactionSubmissionResult> {
+  const trimmedHash = txHash.trim();
+
+  if (!isValidTransactionHash(trimmedHash)) {
+    return {
+      successful: false,
+      transactionHash: trimmedHash,
+      errorMessage: 'Invalid transaction hash: expected 64 hexadecimal characters.',
+    };
+  }
+
   const server = getHorizonServer();
   try {
-    const tx = await server.transactions().transaction(txHash).call();
+    const tx = await server.transactions().transaction(trimmedHash).call();
     return {
       successful: tx.successful,
       transactionHash: tx.hash,
@@ -70,7 +89,7 @@ export async function verifyTransactionByHash(
       err instanceof Error ? err.message : 'Transaction verification failed';
     return {
       successful: false,
-      transactionHash: txHash,
+      transactionHash: trimmedHash,
       errorMessage: message,
     };
   }

@@ -8,6 +8,18 @@ jest.mock('expo-speech', () => ({
   isSpeakingAsync: jest.fn().mockResolvedValue(false),
 }));
 
+// Mock expo-speech-recognition
+jest.mock('expo-speech-recognition', () => ({
+  ExpoSpeechRecognitionModule: {
+    getStateAsync: jest.fn().mockResolvedValue({ isRecognizing: false }),
+    requestPermissionsAsync: jest.fn().mockResolvedValue({ granted: true }),
+    start: jest.fn(),
+    stop: jest.fn(),
+    abort: jest.fn(),
+    addListener: jest.fn().mockReturnValue({ remove: jest.fn() }),
+  },
+}));
+
 // Mock expo-haptics
 jest.mock('expo-haptics', () => ({
   selectionAsync: jest.fn().mockResolvedValue(undefined),

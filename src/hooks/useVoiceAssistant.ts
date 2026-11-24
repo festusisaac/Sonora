@@ -1,11 +1,11 @@
 import { useState, useCallback } from 'react';
 import { useVoiceStore } from '../store/voiceStore';
 import { TTSService } from '../services/speech/tts';
-import { DevSpeechToTextAdapter } from '../services/speech/sttAdapter';
+import { getSpeechToTextAdapter } from '../services/speech/sttAdapter';
 import { parseVoiceCommand } from '../services/speech/commandParser';
 import { HapticsService } from '../services/device/haptics';
 
-const sttAdapter = new DevSpeechToTextAdapter();
+const sttAdapter = getSpeechToTextAdapter();
 
 export function useVoiceAssistant() {
   const {

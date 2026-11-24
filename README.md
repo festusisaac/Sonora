@@ -14,7 +14,7 @@ SONORA is designed from the ground up to solve this:
 - **Spoken Audio Feedback:** Every balance check, transaction detail, recipient confirmation, and error condition is announced through clear spoken voice synthesis.
 - **Accessible Touch & TalkBack Design:** Every UI component complies with accessibility guidelines, enforcing minimum 48x48dp touch targets, semantic accessibility roles, live regions, and tactile haptic cues.
 - **Voice-Directed Command Processing:** Natural spoken commands like *"Check my balance"* or *"Send 25 USDC to Musa"* are parsed and verified safely.
-- **Stellar Network Integration:** Powered by the Stellar blockchain for fast, low-cost asset transfers, initially connected to the **Stellar Testnet**.
+- **Stellar Network Integration:** Powered by the Stellar blockchain for fast, low-cost asset transfers, connected strictly to the **Stellar Testnet** using `@stellar/stellar-sdk` v17.
 - **Non-Custodial & Safe:** Private keys never touch ordinary storage, Zustand stores, plaintext files, or external servers. Payments require explicit user confirmation before signing.
 
 ---
@@ -26,14 +26,14 @@ SONORA is designed from the ground up to solve this:
 - **Language:** TypeScript (Strict Mode)
 - **State Management:** Zustand
 - **Async Caching & Queries:** TanStack Query (`@tanstack/react-query`)
-- **Blockchain SDK:** `@stellar/stellar-sdk` with React Native runtime polyfills
+- **Blockchain SDK:** `@stellar/stellar-sdk` v17.4.0 with Web Crypto `crypto.getRandomValues()` runtime polyfill
 - **Voice & Accessibility:**
   - `expo-speech` (Text-To-Speech)
-  - Modular Speech-To-Text Adapter (`ISpeechToTextAdapter`)
+  - `expo-speech-recognition` + modular adapter (`ISpeechToTextAdapter`)
   - `expo-haptics` (Tactile vibration feedback)
   - React Native Accessibility APIs & Android TalkBack support
 - **Protected Storage:** `expo-secure-store` (Android Keystore / iOS Keychain)
-- **Quality & Testing:** Jest, `@testing-library/react-native`, ESLint, Prettier, TypeScript `tsc`
+- **Quality & Testing:** Jest, `@testing-library/react-native` v14, ESLint, Prettier, TypeScript `tsc`
 
 ---
 
@@ -66,7 +66,7 @@ sonora/
 │   ├── hooks/                     # Custom React hooks (useVoiceAssistant, etc.)
 │   ├── providers/                 # QueryProvider, ThemeProvider
 │   ├── constants/                 # Stellar Testnet & accessibility constants
-│   ├── config/                    # Polyfills (Web Crypto, Buffer) & env config
+│   ├── config/                    # Polyfills (Web Crypto) & env config
 │   ├── types/                     # TypeScript definitions
 │   └── theme/                     # Accessible color tokens (WCAG AAA), typography
 │
@@ -76,7 +76,7 @@ sonora/
 │   └── DEVELOPMENT_ROADMAP.md     # Multi-phase engineering roadmap
 │
 ├── tests/
-│   ├── unit/                      # Stellar validation, command parser, stores
+│   ├── unit/                      # Stellar validation, transactions, command parser, stores
 │   └── components/                # AccessibleButton and UI tests
 │
 ├── app.json                       # Expo configuration (com.sonora.wallet)
@@ -105,7 +105,7 @@ This project is optimized for lightweight development on Windows, macOS, or Linu
 ```bash
 git clone <repository-url>
 cd Sonora
-npm install --legacy-peer-deps
+npm install
 ```
 
 ### Start Development Server
@@ -115,7 +115,7 @@ npm start
 npx expo start
 ```
 
-Press `a` in the terminal to launch on a connected Android phone or emulator.
+Press `a` in the terminal to launch on a connected Android phone or development build.
 
 ### Run Quality Checks
 ```bash
@@ -127,22 +127,22 @@ npm test
 
 # Linting
 npm run lint
+
+# Expo Diagnostic Check
+npx expo-doctor
 ```
 
 ---
 
 ## 6. Important Architectural Decisions
 
-### Stellar SDK Polyfills
-React Native's Hermes engine does not include Node's `Buffer` or `crypto.getRandomValues` by default. SONORA configures these in `src/config/polyfills.ts` which is imported at the absolute entry point of the app before any Stellar SDK module loads:
-```typescript
-import 'react-native-get-random-values';
-import { Buffer } from 'buffer';
-if (typeof global.Buffer === 'undefined') global.Buffer = Buffer;
-```
+### Stellar SDK v17 Upgrade
+SONORA utilizes `@stellar/stellar-sdk` v17.4.0. In v17, the SDK adopts `@noble/ed25519`, `@noble/hashes`, and `@exodus/bytes`, using native `Uint8Array`. The legacy Node.js `Buffer` polyfill has been completely removed. Runtime random number generation in React Native Hermes is provided by `react-native-get-random-values`.
 
-### Speech-to-Text Modular Adapter
-To enable rapid development without forcing heavy native build dependencies upfront, SONORA introduces `ISpeechToTextAdapter`. The app ships with `DevSpeechToTextAdapter` which can be swapped with native Google Speech Recognition or on-device Whisper models in development builds.
+### Voice Recognition Integration
+SONORA implements `ISpeechToTextAdapter` with two backends:
+1. `NativeSpeechToTextAdapter`: Powered by `expo-speech-recognition` (Android SpeechRecognizer / iOS SFSpeechRecognizer). Activated in Expo development builds (`npx expo run:android`) and standalone APKs.
+2. `DevSpeechToTextAdapter`: Simulated speech recognition allowing accessibility interaction testing in simulators and standard development environments.
 
 ### Zero Secrets in Memory State
 Zustand stores strictly hold public information (public address, status, balances). Private keys are never placed in memory stores or ordinary local storage.
@@ -151,9 +151,9 @@ Zustand stores strictly hold public information (public address, status, balance
 
 ## 7. Current Limitations & Next Milestones
 
-- **Phase 1 (Completed):** Complete infrastructure, type-safe architecture, Stellar Testnet integration foundation, accessible UI components, voice command parsing, and test suite.
-- **Phase 2:** Testnet key generation, encrypted Keystore persistence, and voice-assisted payment confirmation.
-- **Phase 3:** Native speech recognition integration, transaction submission, and contacts directory.
+- **Phase 1 & 1.1 (Completed):** Complete infrastructure, type-safe architecture, Stellar SDK v17 upgrade, peer dependency resolution, native speech recognition adapter, accessible UI components, voice command parsing, and 100% passing test suite.
+- **Phase 2:** Testnet key generation (BIP-39 mnemonic + Ed25519 derivation), encrypted Keystore persistence, and voice-assisted payment confirmation.
+- **Phase 3:** Interactive payment flow with spoken verification, Horizon transaction submission, and contacts directory.
 
 ---
 

@@ -26,3 +26,37 @@ Every contributor and agent working on SONORA must strictly adhere to the follow
 | Device Memory Inspection | Medium | Private keys loaded only momentarily in memory during signing; not stored in global state |
 | Plaintext Backup Leakage | Critical | SecureStore hardware-backed keystore with `AFTER_FIRST_UNLOCK` access policy |
 | Accidental Mainnet Transaction | Critical | Hardcoded Testnet Horizon URL and network passphrase validation in Phase 1 |
+
+---
+
+## 3. Android Keystore & Biometric Security Model
+
+### Hardware-Backed Android Keystore
+- Android Keystore generates asymmetric or AES-256 keys inside the Trusted Execution Environment (TEE) or StrongBox Keymaster.
+- Even with root access, private keys stored in the Android Keystore cannot be extracted directly in plaintext.
+- `SecureStorageService` wraps `expo-secure-store`, applying a dedicated namespace (`sonora_sec_`) and hardware-level isolation.
+
+### Biometric Presence vs. Cryptographic Signing
+A critical architectural boundary exists between biometric authentication and cryptographic transaction signing:
+1. **Biometric Authentication (Android BiometricPrompt):** Proves the physical presence and consent of the authenticated user to unlock access to the Keystore. It provides local authorization.
+2. **Cryptographic Signing (Ed25519):** Computes a mathematical digital signature over the SHA-256 transaction hash using the Stellar secret key (`Keypair.sign`).
+- Biometric verification **never** replaces or signs the transaction directly.
+- The workflow is:
+  `[Voice Draft]` -> `[Spoken Confirmation]` -> `[Biometric / PIN Unlock]` -> `[Decryption of Seed]` -> `[Ed25519 Local Signature]` -> `[Immediate Memory Zeroing of Seed]` -> `[Horizon Submission]`.
+
+---
+
+## 4. Proposed Phase 2 Key-Management Architecture
+
+1. **Entropy & Mnemonic Generation:**
+   - 128-bit cryptographically secure entropy generated via `crypto.getRandomValues()`.
+   - Converted to 12-word BIP-39 English mnemonic.
+2. **Key Derivation (SEP-0005 standard):**
+   - PBKDF2 HMAC-SHA512 produces 512-bit seed.
+   - SLIP-0010 derives Ed25519 keypair using standard Stellar derivation path:
+     `m/44'/148'/0'` (primary account).
+3. **Encrypted Persistence:**
+   - The 12-word recovery mnemonic is encrypted and saved to `expo-secure-store` with `requireAuthentication: true`.
+   - The public key (`G...`) is stored in ordinary local preferences and in `walletStore` for read-only balance lookups.
+4. **Ephemerality of Signing Keys:**
+   - Private key objects must be instantiated only inside isolated signing closures and immediately eligible for garbage collection upon signature calculation.
