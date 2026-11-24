@@ -50,6 +50,17 @@ export class HapticsService {
   }
 
   /**
+   * Notification warning (unverified backup, invalid input)
+   */
+  public static async notificationWarning(): Promise<void> {
+    try {
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    } catch {
+      // Silently fall back
+    }
+  }
+
+  /**
    * Notification error (invalid address, network failure)
    */
   public static async notificationError(): Promise<void> {

@@ -45,3 +45,22 @@ jest.mock('expo-secure-store', () => ({
   deleteItemAsync: jest.fn().mockResolvedValue(undefined),
   AFTER_FIRST_UNLOCK: 'AFTER_FIRST_UNLOCK',
 }));
+
+// Mock expo-local-authentication
+jest.mock('expo-local-authentication', () => ({
+  hasHardwareAsync: jest.fn().mockResolvedValue(true),
+  isEnrolledAsync: jest.fn().mockResolvedValue(true),
+  supportedAuthenticationTypesAsync: jest.fn().mockResolvedValue([1, 2]),
+  authenticateAsync: jest.fn().mockResolvedValue({ success: true }),
+  AuthenticationType: {
+    FINGERPRINT: 1,
+    FACIAL_RECOGNITION: 2,
+    IRIS: 3,
+  },
+}));
+
+// Mock expo-clipboard
+jest.mock('expo-clipboard', () => ({
+  setStringAsync: jest.fn().mockResolvedValue(true),
+  getStringAsync: jest.fn().mockResolvedValue(''),
+}));
