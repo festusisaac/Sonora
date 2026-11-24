@@ -250,6 +250,23 @@ export default function WalletScreen() {
                   style={styles.flexBtn}
                 />
               </View>
+
+              <View style={[styles.balanceActions, { marginTop: spacing.sm }]}>
+                <AccessibleButton
+                  label="Send Payment"
+                  accessibilityHint="Navigate to send payment screen"
+                  variant="primary"
+                  onPress={() => router.push('/send' as any)}
+                  style={styles.flexBtn}
+                />
+                <AccessibleButton
+                  label="History"
+                  accessibilityHint="View transaction history"
+                  variant="secondary"
+                  onPress={() => router.push('/wallet/history' as any)}
+                  style={styles.flexBtn}
+                />
+              </View>
             </Card>
 
             {/* Friendbot Testnet Funding */}

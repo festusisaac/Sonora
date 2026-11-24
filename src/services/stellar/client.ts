@@ -1,20 +1,14 @@
-import { Horizon, Networks } from '@stellar/stellar-sdk';
-import { ENV } from '../../config/env';
+import { Horizon } from '@stellar/stellar-sdk';
+import { StellarNetworkConfig } from './stellarNetworkConfig';
 
 /**
- * Singleton Horizon Server instance for Stellar Testnet
+ * Singleton Horizon Server and Network Passphrase accessor
+ * Delegates to centralized StellarNetworkConfig service.
  */
-let horizonServer: Horizon.Server | null = null;
-
 export function getHorizonServer(): Horizon.Server {
-  if (!horizonServer) {
-    horizonServer = new Horizon.Server(ENV.horizonUrl, {
-      allowHttp: false,
-    });
-  }
-  return horizonServer;
+  return StellarNetworkConfig.getHorizonServer();
 }
 
 export function getNetworkPassphrase(): string {
-  return Networks.TESTNET;
+  return StellarNetworkConfig.getNetworkPassphrase();
 }

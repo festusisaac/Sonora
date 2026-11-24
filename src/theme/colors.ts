@@ -34,6 +34,12 @@ export const colors = {
   // Focus & Accessibility indicators
   focusRing: '#FACC15', // High-visibility yellow outline for TalkBack/Key Focus
   hapticBorder: '#60A5FA',
+
+  // Established SONORA Brand Palette
+  brandMilky: '#F5F1E6',
+  brandBlack: '#171717',
+  brandYellow: '#F5C842',
+  brandWhite: '#FFFFFF',
 } as const;
 
 export type ColorName = keyof typeof colors;

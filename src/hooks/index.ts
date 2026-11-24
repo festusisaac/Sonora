@@ -3,3 +3,7 @@ export * from './useStellarAccount';
 export * from './useHapticFeedback';
 export * from './useWallet';
 export * from './useWalletAuthentication';
+export * from './useTransactionPreparation';
+export * from './useTransactionSubmission';
+export * from './useTransactionHistory';
+export * from './useStellarBalances';
