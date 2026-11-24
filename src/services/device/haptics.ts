@@ -17,6 +17,17 @@ export class HapticsService {
   }
 
   /**
+   * Light impact (subtle confirmation, item tap)
+   */
+  public static async impactLight(): Promise<void> {
+    try {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch {
+      // Silently fall back
+    }
+  }
+
+  /**
    * Medium impact (button press, command trigger)
    */
   public static async impactMedium(): Promise<void> {

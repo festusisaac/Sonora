@@ -40,6 +40,8 @@ export const colors = {
   brandBlack: '#171717',
   brandYellow: '#F5C842',
   brandWhite: '#FFFFFF',
+  brandSecondaryText: '#77736A',
+  brandBorder: '#E5E0D5',
 } as const;
 
 export type ColorName = keyof typeof colors;

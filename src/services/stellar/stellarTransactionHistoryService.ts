@@ -111,4 +111,29 @@ export class StellarTransactionHistoryService {
       throw new Error(msg);
     }
   }
+
+  /**
+   * Fetches details of a specific transaction by 64-character hash.
+   */
+  public static async getTransactionDetails(hash: string): Promise<any> {
+    StellarNetworkConfig.assertTestnet();
+    const server = StellarNetworkConfig.getHorizonServer();
+    try {
+      const tx = await server.transactions().transaction(hash).call();
+      return {
+        id: tx.id,
+        successful: tx.successful,
+        hash: tx.hash,
+        ledger: tx.ledger_attr,
+        createdAt: tx.created_at,
+        sourceAccount: tx.source_account,
+        feeCharged: tx.fee_charged,
+        memo: tx.memo,
+        memoType: tx.memo_type,
+      };
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Transaction not found or could not be loaded.';
+      throw new Error(msg);
+    }
+  }
 }

@@ -85,4 +85,18 @@ export class StellarAssetService {
     const isAuthorized = line.is_authorized !== false;
     return { hasTrustline: true, isAuthorized };
   }
+
+  /**
+   * Returns list of supported assets in SONORA.
+   */
+  public static getSupportedAssets(): AssetIdentifier[] {
+    return [
+      { code: 'XLM', isNative: true },
+      {
+        code: 'USDC',
+        isNative: false,
+        issuer: 'GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5',
+      },
+    ];
+  }
 }
