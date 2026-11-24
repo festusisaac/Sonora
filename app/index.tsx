@@ -60,8 +60,12 @@ export default function HomeScreen() {
         accessible={false}
       >
         {/* Header Branding */}
-        <View style={styles.brandContainer} accessible={true} accessibilityRole="header">
-          <AccessibleText variant="title" style={styles.brandTitle}>
+        <View style={styles.brandContainer}>
+          <AccessibleText
+            variant="title"
+            accessibilityRole="header"
+            style={styles.brandTitle}
+          >
             SONORA
           </AccessibleText>
           <AccessibleText variant="subtitle" style={styles.tagline}>
@@ -110,7 +114,7 @@ export default function HomeScreen() {
         </Card>
 
         {/* Accessible Navigation Grid */}
-        <View style={styles.navSection} accessible={true} accessibilityRole="navigation">
+        <View style={styles.navSection}>
           <AccessibleText variant="label" style={styles.navHeader}>
             ACCESSIBLE NAVIGATION
           </AccessibleText>
