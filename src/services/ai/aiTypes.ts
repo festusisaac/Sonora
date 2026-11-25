@@ -43,6 +43,7 @@ export type AIIntent =
   | 'help'
   | 'adjust_speech'
   | 'confirm_choice'
+  | 'greeting'
   | 'general_query'
   | 'unknown';
 

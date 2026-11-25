@@ -54,6 +54,14 @@ describe('Intent Resolver & Entity Extractor', () => {
       }
     });
 
+    test('resolves greetings and social openers', () => {
+      const inputs = ['hello', 'hi', 'hey there', 'how far', 'good morning', 'how are you'];
+      for (const input of inputs) {
+        const res = IntentResolver.resolve(input);
+        expect(res.intent).toBe('greeting');
+      }
+    });
+
     test('resolves choice confirmations and options', () => {
       expect(IntentResolver.resolve('yes').intent).toBe('confirm_choice');
       expect(IntentResolver.resolve('confirm').intent).toBe('confirm_choice');

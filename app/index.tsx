@@ -1,60 +1,47 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   View,
   SafeAreaView,
-  TextInput,
+  TouchableOpacity,
+  Modal,
 } from 'react-native';
 import { router } from 'expo-router';
+import { SonoraText } from '../src/components/ui/SonoraText';
 import { SonoraButton } from '../src/components/ui/SonoraButton';
 import { ScreenReaderAnnouncement } from '../src/components/accessibility/ScreenReaderAnnouncement';
-import {
-  AssistantHeader,
-  AssistantConversation,
-  VoiceInputControl,
-  ListeningIndicator,
-  ProcessingIndicator,
-  SpeakingIndicator,
-  AssistantActionControls,
-  MessageItem,
-} from '../src/components/assistant';
+import { VoiceOrb } from '../src/components/assistant/VoiceOrb';
 import { TransactionReview } from '../src/components/wallet/TransactionReview';
 import { useSonoraAssistant } from '../src/hooks/useSonoraAssistant';
 import { useWalletStore } from '../src/store/walletStore';
-import { TTSService } from '../src/services/speech/tts';
 import { HapticsService } from '../src/services/device/haptics';
 import { colors } from '../src/theme/colors';
 import { spacing } from '../src/theme/spacing';
 
 export default function HomeScreen() {
   const {
-    messages,
     assistantState,
     workflowStep,
     activeDraft,
     lastSpokenMessage,
-    suggestedQuickReplies,
     startListening,
     stopListening,
     stopSpeaking,
-    processUserInput,
     repeatLastResponse,
     cancelWorkflow,
   } = useSonoraAssistant();
 
   const { publicKey } = useWalletStore();
-  const [textInput, setTextInput] = useState<string>('');
   const [announcement, setAnnouncement] = useState<string>('');
-  const conversationScrollRef = useRef<any>(null);
 
-  // Spoken greeting on first enter
+  // Spoken greeting on first launch
   useEffect(() => {
     let isMounted = true;
     Promise.resolve().then(() => {
       if (isMounted) {
         const welcomeSpeech = publicKey
-          ? 'Welcome back to SONORA. Your Stellar wallet is ready. Tap the center button or speak to get started.'
-          : 'Welcome to SONORA. Your voice-first Stellar wallet. You do not have a wallet yet. Double tap Create Wallet or speak to begin.';
+          ? 'Welcome to SONORA. Tap the center orb to speak.'
+          : 'Welcome to SONORA. Your voice-first Stellar wallet. Tap the center orb to begin.';
         setAnnouncement(welcomeSpeech);
       }
     });
@@ -63,43 +50,25 @@ export default function HomeScreen() {
     };
   }, [publicKey]);
 
-  const handleMicToggle = async () => {
+  const handleOrbPress = async () => {
+    if (assistantState === 'speaking') {
+      await stopSpeaking();
+      setAnnouncement('Voice stopped.');
+      return;
+    }
+
     if (assistantState === 'listening') {
       await stopListening();
-      setAnnouncement('Microphone closed. Processing request.');
+      setAnnouncement('Processing your request…');
     } else {
-      setAnnouncement('Listening now. Please speak clearly.');
+      setAnnouncement('Listening now. Please speak.');
       await startListening();
     }
   };
 
-  const handleSendText = async () => {
-    if (!textInput.trim()) return;
-    const prompt = textInput.trim();
-    setTextInput('');
-    setAnnouncement(`Sent: ${prompt}`);
-    await processUserInput(prompt);
-  };
-
-  const handleQuickAction = async (command: string) => {
+  const handleOpenSettings = async () => {
     await HapticsService.selection();
-    setAnnouncement(`Selected: ${command}`);
-    await processUserInput(command);
-  };
-
-  const handleOpenHelp = async () => {
-    await HapticsService.impactMedium();
-    const helpText =
-      'SONORA Help: You can speak naturally at any time. Say "What is my balance?", "Send 10 XLM to David", "Show receiving address", or "Show transaction history". Tap Stop Voice to interrupt at any point.';
-    setAnnouncement(helpText);
-    await TTSService.speak(helpText);
-  };
-
-  const handleNavigate = async (
-    route: '/wallet' | '/send' | '/receive' | '/contacts' | '/settings' | '/onboarding'
-  ) => {
-    await HapticsService.selection();
-    router.push(route);
+    router.push('/settings');
   };
 
   const handleProceedToConfirm = async () => {
@@ -107,167 +76,144 @@ export default function HomeScreen() {
     router.push('/send/confirm');
   };
 
-  // Convert assistant state for indicator
-  const mappedStatus =
-    assistantState === 'listening'
-      ? 'listening'
-      : assistantState === 'thinking'
-      ? 'processing'
-      : assistantState === 'speaking'
-      ? 'speaking'
-      : 'ready';
+  const isReviewVisible = workflowStep === 'awaiting_review' && Boolean(activeDraft);
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScreenReaderAnnouncement message={announcement} />
 
-      {/* 1. Header with Identity, Network & Help */}
-      <AssistantHeader
-        status={mappedStatus}
-        network="TESTNET"
-        onOpenHelp={handleOpenHelp}
-        onOpenSettings={() => handleNavigate('/settings')}
-      />
-
-      <View style={styles.content}>
-        {/* 2. Central Conversational Transcript Area */}
-        <View style={styles.conversationWrapper}>
-          <AssistantConversation
-            messages={messages as MessageItem[]}
-            onRepeatMessage={repeatLastResponse}
-            scrollViewRef={conversationScrollRef}
-          />
+      {/* 1. Minimal Top Header */}
+      <View style={styles.topHeader}>
+        <View style={styles.brandRow}>
+          <SonoraText variant="title" accessibilityRole="header" style={styles.brandTitle}>
+            SONORA
+          </SonoraText>
+          <View
+            accessible={true}
+            accessibilityRole="text"
+            accessibilityLabel="Network: Stellar Testnet"
+            style={styles.networkBadge}
+          >
+            <SonoraText variant="label" style={styles.networkText}>
+              TESTNET
+            </SonoraText>
+          </View>
         </View>
 
-        {/* 3. Live State Indicators */}
-        {assistantState === 'listening' ? (
-          <View style={styles.indicatorContainer}>
-            <ListeningIndicator />
-          </View>
-        ) : null}
+        <TouchableOpacity
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel="Settings"
+          accessibilityHint="Open voice speed, wallet security, and accessibility settings"
+          onPress={handleOpenSettings}
+          style={styles.settingsButton}
+        >
+          <SonoraText variant="label" style={styles.settingsText}>
+            Settings
+          </SonoraText>
+        </TouchableOpacity>
+      </View>
 
-        {assistantState === 'thinking' ? (
-          <View style={styles.indicatorContainer}>
-            <ProcessingIndicator message="SONORA is thinking…" />
-          </View>
-        ) : null}
+      {/* 2. Main Hero Content: The Pure Conversational Voice Centerpiece */}
+      <View style={styles.centerContainer}>
+        <VoiceOrb
+          state={assistantState}
+          onPress={handleOrbPress}
+        />
 
-        {assistantState === 'speaking' ? (
-          <View style={styles.indicatorContainer}>
-            <SpeakingIndicator
-              message="Speaking response…"
-              onStop={stopSpeaking}
-            />
-          </View>
-        ) : null}
-
-        {/* 4. Active Transaction Draft Card */}
-        {workflowStep === 'awaiting_review' && activeDraft ? (
-          <View style={styles.draftContainer}>
-            <TransactionReview
-              recipientName={activeDraft.recipientName}
-              recipientAddress={activeDraft.recipient || ''}
-              amount={activeDraft.amount || '0'}
-              assetCode={activeDraft.asset || 'XLM'}
-              estimatedFeeStroops={activeDraft.fee ? parseFloat(activeDraft.fee) * 10000000 : 100}
-              memo={activeDraft.memo}
-              status="Awaiting Your Authorization"
-            />
-            <View style={styles.draftButtonRow}>
-              <SonoraButton
-                label="Review & Authorize"
-                accessibilityHint="Opens hardware biometric prompt to sign and submit payment"
-                variant="primary"
-                size="large"
-                onPress={handleProceedToConfirm}
-                style={styles.authorizeBtn}
-              />
-              <SonoraButton
-                label="Cancel"
-                accessibilityHint="Cancels this payment draft"
-                variant="danger"
-                onPress={cancelWorkflow}
-                style={styles.cancelBtn}
-              />
+        {/* Live Spoken Transcription Display (for low-vision / reassurance) */}
+        {lastSpokenMessage ? (
+          <View
+            accessible={true}
+            accessibilityRole="text"
+            accessibilityLabel={`SONORA said: ${lastSpokenMessage}`}
+            style={styles.spokenCard}
+          >
+            <SonoraText variant="caption" style={styles.spokenHeader}>
+              SONORA
+            </SonoraText>
+            <SonoraText variant="body" style={styles.spokenBody} numberOfLines={3}>
+              “{lastSpokenMessage}”
+            </SonoraText>
+            <View style={styles.spokenActions}>
+              <TouchableOpacity
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel="Repeat response"
+                onPress={repeatLastResponse}
+                style={styles.repeatBtn}
+              >
+                <SonoraText variant="caption" style={styles.repeatBtnText}>
+                  Repeat
+                </SonoraText>
+              </TouchableOpacity>
+              {assistantState === 'speaking' ? (
+                <TouchableOpacity
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel="Stop speaking"
+                  onPress={stopSpeaking}
+                  style={styles.stopBtn}
+                >
+                  <SonoraText variant="caption" style={styles.stopBtnText}>
+                    Stop
+                  </SonoraText>
+                </TouchableOpacity>
+              ) : null}
             </View>
           </View>
         ) : null}
-
-        {/* 5. Prompt Alternative & Quick Queries */}
-        <AssistantActionControls
-          onRepeatLast={lastSpokenMessage ? repeatLastResponse : undefined}
-          onStopSpeaking={assistantState === 'speaking' ? stopSpeaking : undefined}
-          isSpeaking={assistantState === 'speaking'}
-          quickActions={suggestedQuickReplies}
-          onQuickAction={handleQuickAction}
-        />
-
-        {/* 6. Central Large Microphone / Voice Control */}
-        <View style={styles.micSection}>
-          <VoiceInputControl
-            isListening={assistantState === 'listening'}
-            isProcessing={assistantState === 'thinking'}
-            onPress={handleMicToggle}
-          />
-        </View>
-
-        {/* 7. Text Input Fallback (for noisy / quiet settings) */}
-        <View style={styles.textInputRow}>
-          <TextInput
-            style={styles.textInput}
-            placeholder="Or type a question to SONORA…"
-            placeholderTextColor={colors.secondary}
-            value={textInput}
-            onChangeText={setTextInput}
-            onSubmitEditing={handleSendText}
-            accessibilityLabel="Type request to assistant"
-            accessibilityHint="Text-based alternative to speaking"
-          />
-          <SonoraButton
-            label="Send"
-            accessibilityHint="Submits typed message"
-            variant="dark"
-            onPress={handleSendText}
-            style={styles.sendButton}
-          />
-        </View>
-
-        {/* 8. Quick Navigation Bar (Accessible & Clean) */}
-        <View style={styles.navBar}>
-          <SonoraButton
-            label="Wallet"
-            accessibilityHint="Opens wallet balance and account status"
-            variant="secondary"
-            size="compact"
-            onPress={() => handleNavigate('/wallet')}
-            style={styles.navPill}
-          />
-          <SonoraButton
-            label="Receive"
-            accessibilityHint="Opens receiving address and QR code"
-            variant="secondary"
-            size="compact"
-            onPress={() => handleNavigate('/receive')}
-            style={styles.navPill}
-          />
-          <SonoraButton
-            label="Contacts"
-            accessibilityHint="Opens saved address book"
-            variant="secondary"
-            size="compact"
-            onPress={() => handleNavigate('/contacts')}
-            style={styles.navPill}
-          />
-          <SonoraButton
-            label="Onboarding"
-            accessibilityHint="Replays voice onboarding tutorial"
-            variant="secondary"
-            size="compact"
-            onPress={() => handleNavigate('/onboarding')}
-            style={styles.navPill}
-          />
-        </View>
       </View>
+
+      {/* 3. Bottom Minimal Guidance */}
+      <View style={styles.bottomBar}>
+        <SonoraText variant="caption" style={styles.bottomHint}>
+          Voice-first crypto companion. Tap orb or say “Help” at any time.
+        </SonoraText>
+      </View>
+
+      {/* 4. Crypto Action Sheet: Only slides up when a transaction is ready */}
+      {isReviewVisible && activeDraft ? (
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={isReviewVisible}
+          onRequestClose={cancelWorkflow}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalSheet}>
+              <TransactionReview
+                recipientName={activeDraft.recipientName}
+                recipientAddress={activeDraft.recipient || ''}
+                amount={activeDraft.amount || '0'}
+                assetCode={activeDraft.asset || 'XLM'}
+                estimatedFeeStroops={activeDraft.fee ? parseFloat(activeDraft.fee) * 10000000 : 100}
+                memo={activeDraft.memo}
+                status="Awaiting Authorization"
+              />
+
+              <View style={styles.modalButtonRow}>
+                <SonoraButton
+                  label="Authorize Payment"
+                  accessibilityHint="Triggers fingerprint or PIN authentication to sign transaction"
+                  variant="primary"
+                  size="large"
+                  onPress={handleProceedToConfirm}
+                  style={styles.authorizeButton}
+                />
+                <SonoraButton
+                  label="Cancel"
+                  accessibilityHint="Cancels this transaction"
+                  variant="danger"
+                  size="large"
+                  onPress={cancelWorkflow}
+                  style={styles.cancelButton}
+                />
+              </View>
+            </View>
+          </View>
+        </Modal>
+      ) : null}
     </SafeAreaView>
   );
 }
@@ -276,68 +222,146 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.milky,
-  },
-  content: {
-    flex: 1,
     justifyContent: 'space-between',
+  },
+  topHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
     paddingBottom: spacing.sm,
   },
-  conversationWrapper: {
-    flex: 1,
-    minHeight: 140,
-  },
-  indicatorContainer: {
-    paddingHorizontal: spacing.md,
-  },
-  draftContainer: {
-    paddingHorizontal: spacing.md,
-    gap: spacing.xs,
-  },
-  draftButtonRow: {
+  brandRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: spacing.sm,
   },
-  authorizeBtn: {
-    flex: 2,
+  brandTitle: {
+    fontSize: 22,
+    fontWeight: '900',
+    letterSpacing: 1.5,
+    color: colors.black,
   },
-  cancelBtn: {
-    flex: 1,
+  networkBadge: {
+    backgroundColor: colors.white,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  micSection: {
-    alignItems: 'center',
+  networkText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: colors.secondary,
+  },
+  settingsButton: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs + 2,
+    borderRadius: 10,
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.border,
+    minHeight: 38,
     justifyContent: 'center',
   },
-  textInputRow: {
-    flexDirection: 'row',
-    paddingHorizontal: spacing.md,
-    gap: spacing.sm,
-    alignItems: 'center',
-    marginVertical: spacing.xs,
+  settingsText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.black,
   },
-  textInput: {
+  centerContainer: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+  },
+  spokenCard: {
     backgroundColor: colors.white,
     borderWidth: 1.5,
     borderColor: colors.border,
-    borderRadius: 12,
-    paddingHorizontal: spacing.md,
-    height: 48,
+    borderRadius: 16,
+    padding: spacing.md,
+    width: '100%',
+    maxWidth: 380,
+    marginTop: 20,
+    gap: 4,
+  },
+  spokenHeader: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: colors.secondary,
+    letterSpacing: 0.5,
+  },
+  spokenBody: {
     color: colors.black,
-    fontSize: 14,
+    fontSize: 15,
+    lineHeight: 22,
   },
-  sendButton: {
-    minHeight: 48,
-    paddingHorizontal: spacing.md,
-  },
-  navBar: {
+  spokenActions: {
     flexDirection: 'row',
-    paddingHorizontal: spacing.md,
-    gap: spacing.xs,
-    justifyContent: 'space-between',
-    paddingTop: spacing.xs,
+    gap: spacing.sm,
+    marginTop: 6,
+    justifyContent: 'flex-end',
   },
-  navPill: {
+  repeatBtn: {
+    backgroundColor: colors.milky,
+    paddingHorizontal: spacing.sm + 4,
+    paddingVertical: 4,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  repeatBtnText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.black,
+  },
+  stopBtn: {
+    backgroundColor: colors.black,
+    paddingHorizontal: spacing.sm + 4,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  stopBtnText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.white,
+  },
+  bottomBar: {
+    alignItems: 'center',
+    paddingBottom: spacing.lg,
+    paddingHorizontal: spacing.lg,
+  },
+  bottomHint: {
+    color: colors.secondary,
+    fontSize: 12,
+    textAlign: 'center',
+  },
+  modalOverlay: {
     flex: 1,
-    paddingHorizontal: spacing.xs,
+    backgroundColor: 'rgba(23, 23, 23, 0.65)',
+    justifyContent: 'flex-end',
+  },
+  modalSheet: {
+    backgroundColor: colors.milky,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: spacing.lg,
+    paddingBottom: spacing.xxl,
+    borderWidth: 2,
+    borderColor: colors.border,
+    gap: spacing.md,
+  },
+  modalButtonRow: {
+    flexDirection: 'row',
+    gap: spacing.md,
+  },
+  authorizeButton: {
+    flex: 2,
+  },
+  cancelButton: {
+    flex: 1,
   },
 });

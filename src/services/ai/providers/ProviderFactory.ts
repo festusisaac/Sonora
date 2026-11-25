@@ -15,10 +15,10 @@ export type ProviderType = 'mock' | 'openai' | 'gemini';
 export class ProviderFactory {
   private static instance: ProviderFactory;
   private currentProvider: AIProvider;
-  private providerType: ProviderType = 'mock';
+  private providerType: ProviderType = 'gemini';
 
   private constructor() {
-    this.currentProvider = new MockAIProvider();
+    this.currentProvider = new GeminiProvider();
   }
 
   public static getInstance(): ProviderFactory {

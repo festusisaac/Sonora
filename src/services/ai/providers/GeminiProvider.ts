@@ -1,4 +1,6 @@
+import Constants from 'expo-constants';
 import { AIProvider } from './AIProvider';
+import { MockAIProvider } from './MockAIProvider';
 import {
   ConversationTurn,
   ToolDefinition,
@@ -6,6 +8,19 @@ import {
   AIToolCall,
   AIProviderConfig,
 } from '../aiTypes';
+
+function resolveDefaultGatewayUrl(): string {
+  try {
+    const hostUri = Constants.expoConfig?.hostUri;
+    if (hostUri) {
+      const ip = hostUri.split(':')[0];
+      return `http://${ip}:3001`;
+    }
+  } catch {
+    // ignore
+  }
+  return 'http://localhost:3001';
+}
 
 /**
  * Google Gemini Provider via SONORA AI Gateway
@@ -21,16 +36,17 @@ export class GeminiProvider implements AIProvider {
   private gatewayUrl: string;
   private gatewayAuthToken: string;
   private timeoutMs: number;
+  private fallbackProvider: MockAIProvider;
 
   constructor(config: AIProviderConfig = {}) {
-    // Default to local gateway port 3001 (or Android loopback 10.0.2.2:3001 when on emulator)
     this.gatewayUrl = (
       config.gatewayUrl ||
       config.baseUrl ||
-      'http://localhost:3001'
+      resolveDefaultGatewayUrl()
     ).replace(/\/+$/, '');
     this.gatewayAuthToken = config.gatewayAuthToken || 'sonora_dev_secret_auth_token_replace_in_prod';
     this.timeoutMs = config.timeoutMs || 15000;
+    this.fallbackProvider = new MockAIProvider();
   }
 
   isConfigured(): boolean {
@@ -47,7 +63,7 @@ export class GeminiProvider implements AIProvider {
     context?: Record<string, unknown>
   ): Promise<AIResponse> {
     if (!this.isConfigured()) {
-      throw new Error('Gemini Gateway Provider is not configured with a valid gateway URL.');
+      return this.fallbackProvider.generateResponse(messages, tools, context);
     }
 
     const payloadMessages = messages.map((m) => ({
@@ -76,8 +92,8 @@ export class GeminiProvider implements AIProvider {
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`SONORA Gateway error (${response.status}): ${errorText}`);
+        // Fall back gracefully to conversational handler
+        return this.fallbackProvider.generateResponse(messages, tools, context);
       }
 
       const data = (await response.json()) as {
@@ -93,6 +109,9 @@ export class GeminiProvider implements AIProvider {
         intent: (data.intent as any) || undefined,
         suggestedQuickReplies: data.suggestedQuickReplies,
       };
+    } catch {
+      // If gateway is offline, unreachable on LAN, or times out, seamlessly fall back
+      return this.fallbackProvider.generateResponse(messages, tools, context);
     } finally {
       clearTimeout(timeoutId);
     }

@@ -370,6 +370,17 @@ export class SonoraAIOrchestrator {
           return await this.executePaymentPreparation(activePublicKey);
         }
 
+        case 'greeting': {
+          const speech =
+            "Hello! I am SONORA, your voice wallet companion. I'm listening. How can I help you with your Stellar wallet today?";
+          await this.speak(speech);
+          return {
+            text: speech,
+            intent: 'greeting',
+            suggestedQuickReplies: ['Check Balance', 'Send XLM', 'My Address'],
+          };
+        }
+
         case 'help': {
           const speech =
             'SONORA is your voice-first Stellar wallet companion. You can say: Check my balance, Send 5 XLM to David, Show my address, List my contacts, Show recent transactions, Speak slower, or Stop at any time.';

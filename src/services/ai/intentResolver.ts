@@ -83,7 +83,24 @@ export class IntentResolver {
       return { intent: 'repeat', confidence: 1.0, entities: {}, rawText };
     }
 
-    // 4. Help commands
+    // 4. Greetings and Conversational Openers
+    if (
+      text === 'hello' ||
+      text === 'hi' ||
+      text === 'hey' ||
+      text.startsWith('hello') ||
+      text.startsWith('hi ') ||
+      text.startsWith('hey ') ||
+      text.includes('how far') ||
+      text.includes('how are you') ||
+      text.includes('good morning') ||
+      text.includes('good afternoon') ||
+      text.includes('good evening')
+    ) {
+      return { intent: 'greeting', confidence: 1.0, entities: {}, rawText };
+    }
+
+    // 5. Help commands
     if (
       text === 'help' ||
       text === 'what can you do' ||

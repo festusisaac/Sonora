@@ -1,3 +1,4 @@
+export { VoiceOrb, type VoiceOrbProps } from './VoiceOrb';
 export { AssistantHeader, type AssistantHeaderProps } from './AssistantHeader';
 export { AssistantConversation, type AssistantConversationProps, type MessageItem } from './AssistantConversation';
 export { AssistantMessage, type AssistantMessageProps } from './AssistantMessage';
