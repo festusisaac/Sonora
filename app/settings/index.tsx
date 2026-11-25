@@ -3,9 +3,9 @@ import {
   StyleSheet,
   View,
   ScrollView,
-  SafeAreaView,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { AccessibleButton } from '../../src/components/common/AccessibleButton';
 import { AccessibleText } from '../../src/components/common/AccessibleText';

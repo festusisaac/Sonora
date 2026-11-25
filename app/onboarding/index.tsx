@@ -3,8 +3,8 @@ import {
   StyleSheet,
   View,
   ScrollView,
-  SafeAreaView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { SonoraButton } from '../../src/components/ui/SonoraButton';
 import { SonoraText } from '../../src/components/ui/SonoraText';

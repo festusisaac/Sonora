@@ -3,10 +3,10 @@ import {
   StyleSheet,
   View,
   ScrollView,
-  SafeAreaView,
   Alert,
   ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import { AccessibleButton } from '../../src/components/common/AccessibleButton';

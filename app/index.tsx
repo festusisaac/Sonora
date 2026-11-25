@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   View,
-  SafeAreaView,
   TouchableOpacity,
   Modal,
 } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { SonoraText } from '../src/components/ui/SonoraText';
 import { SonoraButton } from '../src/components/ui/SonoraButton';
@@ -33,6 +33,7 @@ export default function HomeScreen() {
 
   const { publicKey } = useWalletStore();
   const [announcement, setAnnouncement] = useState<string>('');
+  const insets = useSafeAreaInsets();
 
   // Spoken greeting on first launch
   useEffect(() => {
@@ -181,7 +182,12 @@ export default function HomeScreen() {
           onRequestClose={cancelWorkflow}
         >
           <View style={styles.modalOverlay}>
-            <View style={styles.modalSheet}>
+            <View
+              style={[
+                styles.modalSheet,
+                { paddingBottom: Math.max(insets.bottom, spacing.lg) + spacing.md },
+              ]}
+            >
               <TransactionReview
                 recipientName={activeDraft.recipientName}
                 recipientAddress={activeDraft.recipient || ''}

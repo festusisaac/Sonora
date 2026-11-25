@@ -3,9 +3,9 @@ import {
   StyleSheet,
   View,
   ScrollView,
-  SafeAreaView,
   ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { AccessibleButton } from '../../src/components/common/AccessibleButton';
 import { AccessibleText } from '../../src/components/common/AccessibleText';
 import { Card } from '../../src/components/common/Card';
