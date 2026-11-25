@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   TouchableOpacity,
   View,
@@ -35,13 +35,13 @@ export const VoiceInputControl: React.FC<VoiceInputControlProps> = ({
 }) => {
   const [reduceMotion, setReduceMotion] = useState(false);
 
-  // Animated values for pulse halo and waveform bars
-  const pulseAnim1 = useRef(new Animated.Value(0)).current;
-  const pulseAnim2 = useRef(new Animated.Value(0)).current;
-  const wave1 = useRef(new Animated.Value(0.4)).current;
-  const wave2 = useRef(new Animated.Value(0.8)).current;
-  const wave3 = useRef(new Animated.Value(0.5)).current;
-  const wave4 = useRef(new Animated.Value(0.7)).current;
+  // Animated values initialized via state (React 19 compliant, zero ref-in-render warnings)
+  const [pulseAnim1] = useState(() => new Animated.Value(0));
+  const [pulseAnim2] = useState(() => new Animated.Value(0));
+  const [wave1] = useState(() => new Animated.Value(0.4));
+  const [wave2] = useState(() => new Animated.Value(0.8));
+  const [wave3] = useState(() => new Animated.Value(0.5));
+  const [wave4] = useState(() => new Animated.Value(0.7));
 
   // Check Android Reduce Motion accessibility setting
   useEffect(() => {
