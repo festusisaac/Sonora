@@ -6,6 +6,28 @@ jest.mock('expo-speech', () => ({
   speak: jest.fn(),
   stop: jest.fn(),
   isSpeakingAsync: jest.fn().mockResolvedValue(false),
+  getAvailableVoicesAsync: jest.fn().mockResolvedValue([]),
+  VoiceQuality: {
+    Default: 'Default',
+    Enhanced: 'Enhanced',
+  },
+}));
+
+// Mock expo-av
+jest.mock('expo-av', () => ({
+  Audio: {
+    Sound: {
+      createAsync: jest.fn().mockResolvedValue({
+        sound: {
+          playAsync: jest.fn().mockResolvedValue(undefined),
+          stopAsync: jest.fn().mockResolvedValue(undefined),
+          unloadAsync: jest.fn().mockResolvedValue(undefined),
+        },
+        status: { isLoaded: true },
+      }),
+    },
+    setAudioModeAsync: jest.fn().mockResolvedValue(undefined),
+  },
 }));
 
 // Mock expo-speech-recognition

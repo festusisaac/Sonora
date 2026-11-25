@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { config, getSafeConfig } from './config/env';
 import { authenticateRequest } from './middleware/auth';
 import { GeminiGatewayClient } from './services/gemini/geminiClient';
+import { ElevenLabsClient } from './services/tts/elevenLabsClient';
 import {
   GatewayChatRequest,
   GatewayHealthResponse,
@@ -21,6 +22,11 @@ const chatRequestSchema = z.object({
   ).min(1, 'At least one message is required'),
   tools: z.array(z.any()).optional(),
   context: z.record(z.any()).optional(),
+});
+
+const ttsRequestSchema = z.object({
+  text: z.string().min(1, 'Text is required').max(2000, 'Text exceeds 2000 characters limit'),
+  voiceId: z.string().optional(),
 });
 
 export function buildServer(): FastifyInstance {
@@ -47,8 +53,9 @@ export function buildServer(): FastifyInstance {
   });
 
   const geminiClient = new GeminiGatewayClient();
+  const elevenLabsClient = new ElevenLabsClient();
 
-  // Authentication Hook for /v1/ai routes
+  // Authentication Hook for /v1/ai and /v1/tts routes
   app.addHook('onRequest', authenticateRequest);
 
   // Health endpoint
@@ -68,6 +75,86 @@ export function buildServer(): FastifyInstance {
       model: config.GEMINI_MODEL,
       configured: geminiClient.isConfigured(),
     };
+  });
+
+  // TTS status endpoint
+  app.get('/v1/tts/status', async () => {
+    return {
+      provider: 'elevenlabs',
+      configured: elevenLabsClient.isConfigured(),
+      defaultVoiceId: config.ELEVENLABS_VOICE_ID,
+    };
+  });
+
+  // TTS synthesize endpoint (returns MP3 stream)
+  app.post('/v1/tts/synthesize', async (request, reply) => {
+    const parseResult = ttsRequestSchema.safeParse(request.body);
+    if (!parseResult.success) {
+      return reply.status(400).send({
+        statusCode: 400,
+        error: 'Bad Request',
+        message: 'Invalid TTS request payload',
+        details: parseResult.error.format(),
+      });
+    }
+
+    try {
+      const audioBuffer = await elevenLabsClient.synthesize(parseResult.data.text, {
+        voiceId: parseResult.data.voiceId,
+      });
+
+      return reply
+        .header('Content-Type', 'audio/mpeg')
+        .header('Content-Length', audioBuffer.length)
+        .header('Accept-Ranges', 'bytes')
+        .send(audioBuffer);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'ElevenLabs TTS synthesis failed';
+      return reply.status(502).send({
+        statusCode: 502,
+        error: 'Bad Gateway',
+        message,
+      });
+    }
+  });
+
+  // Direct audio stream endpoint for native audio players
+  app.get('/v1/tts/stream', async (request, reply) => {
+    const query = request.query as { text?: string; token?: string; voiceId?: string };
+    if (!query.token || query.token !== config.GATEWAY_AUTH_TOKEN) {
+      return reply.status(401).send({
+        statusCode: 401,
+        error: 'Unauthorized',
+        message: 'Valid client authorization token required',
+      });
+    }
+
+    if (!query.text || query.text.trim().length === 0) {
+      return reply.status(400).send({
+        statusCode: 400,
+        error: 'Bad Request',
+        message: 'text query parameter is required',
+      });
+    }
+
+    try {
+      const audioBuffer = await elevenLabsClient.synthesize(query.text, {
+        voiceId: query.voiceId,
+      });
+
+      return reply
+        .header('Content-Type', 'audio/mpeg')
+        .header('Content-Length', audioBuffer.length)
+        .header('Accept-Ranges', 'bytes')
+        .send(audioBuffer);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'ElevenLabs TTS synthesis failed';
+      return reply.status(502).send({
+        statusCode: 502,
+        error: 'Bad Gateway',
+        message,
+      });
+    }
   });
 
   // Chat completions endpoint

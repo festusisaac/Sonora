@@ -10,7 +10,12 @@ export async function authenticateRequest(
   reply: FastifyReply
 ): Promise<void> {
   // Allow health check and status without auth token
-  if (request.url === '/v1/health' || request.url === '/v1/ai/status') {
+  if (
+    request.url === '/v1/health' ||
+    request.url === '/v1/ai/status' ||
+    request.url === '/v1/tts/status' ||
+    request.url.startsWith('/v1/tts/stream')
+  ) {
     return;
   }
 
