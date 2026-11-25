@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -35,6 +35,18 @@ export default function HomeScreen() {
   const [textInput, setTextInput] = useState<string>('');
   const [announcement, setAnnouncement] = useState<string>('');
 
+  useEffect(() => {
+    let isMounted = true;
+    Promise.resolve().then(() => {
+      if (isMounted) {
+        setAnnouncement('Welcome to SONORA. Assistant ready. Double tap to speak.');
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const handleMicPress = async () => {
     if (assistantState === 'listening') {
       await stopListening();
@@ -59,7 +71,9 @@ export default function HomeScreen() {
     await processUserInput(reply);
   };
 
-  const handleNavigate = async (route: '/wallet' | '/send' | '/receive' | '/contacts' | '/settings') => {
+  const handleNavigate = async (
+    route: '/wallet' | '/send' | '/receive' | '/contacts' | '/settings' | '/onboarding'
+  ) => {
     await HapticsService.selection();
     router.push(route);
   };
@@ -325,6 +339,13 @@ export default function HomeScreen() {
               accessibilityHint="Navigates to settings and preferences"
               variant="secondary"
               onPress={() => handleNavigate('/settings')}
+              style={styles.navButton}
+            />
+            <AccessibleButton
+              label="Voice Onboarding & Intro"
+              accessibilityHint="Navigates to voice onboarding tutorial and welcome guide"
+              variant="secondary"
+              onPress={() => handleNavigate('/onboarding')}
               style={styles.navButton}
             />
           </View>

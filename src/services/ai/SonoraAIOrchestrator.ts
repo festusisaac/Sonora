@@ -97,8 +97,52 @@ export class SonoraAIOrchestrator {
         return { text, intent: 'adjust_speech' };
       }
 
-      // 2. State Machine: active disambiguation
+      // Handle conversational interruption: checking balance while an active payment draft is in progress
       const currentStep = this.contextManager.getStep();
+      if (
+        resolution.intent === 'check_balance' &&
+        (currentStep === 'collecting_payment_details' ||
+          currentStep === 'awaiting_review' ||
+          currentStep === 'disambiguating_recipient')
+      ) {
+        const toolResult = await ToolDispatcher.executeToolCall(
+          { id: `call-${Date.now()}`, name: 'getBalances', parameters: {} },
+          activePublicKey
+        );
+        let balanceSpeech = 'You currently have 0 XLM available to spend.';
+        if (!toolResult.error && toolResult.result) {
+          const balances = toolResult.result as {
+            nativeBalance: string;
+            availableNativeBalance: string;
+          };
+          balanceSpeech = `You currently have ${ProactiveGuidance.formatAmountForSpeech(balances.availableNativeBalance, 'XLM')} available to spend.`;
+        }
+
+        const draft = this.contextManager.getDraft();
+        let reminder = '';
+        if (currentStep === 'awaiting_review' && draft.amount) {
+          reminder = ` You have an active draft to send ${draft.amount} ${draft.asset || 'XLM'} to ${draft.recipientName || draft.recipient?.slice(0, 8)}. Would you like to confirm, or say cancel?`;
+        } else if (currentStep === 'collecting_payment_details') {
+          if (draft.recipientName || draft.recipient) {
+            reminder = ` You are preparing a payment to ${draft.recipientName || draft.recipient?.slice(0, 8)}. How much would you like to send?`;
+          } else {
+            reminder = ' Who would you like to send your payment to?';
+          }
+        } else if (currentStep === 'disambiguating_recipient') {
+          reminder = ' Which contact did you want to select?';
+        }
+
+        const fullResponse = `${balanceSpeech}${reminder}`;
+        await this.speak(fullResponse);
+        return {
+          text: fullResponse,
+          intent: 'check_balance',
+          workflowState: currentStep,
+          suggestedQuickReplies: currentStep === 'awaiting_review' ? ['Confirm', 'Cancel'] : ['Cancel'],
+        };
+      }
+
+      // 2. State Machine: active disambiguation
       if (currentStep === 'disambiguating_recipient') {
         const draft = this.contextManager.getDraft();
         const candidates = draft.disambiguationCandidates || [];
