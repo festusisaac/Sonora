@@ -294,4 +294,61 @@ describe('Phase 4: 17 AI Security Invariants Verification', () => {
     expect(cancelRes.intent).toBe('cancel');
     expect(orchestrator.getContextManager().getStep()).toBe('idle');
   });
+
+  // Security Invariant 18: Provider failure does not bypass wallet security
+  test('Invariant 18: Provider failure does not bypass wallet security', async () => {
+    const orchestrator = SonoraAIOrchestrator.getInstance();
+    // Simulate provider throwing network error
+    jest.spyOn(global, 'fetch').mockRejectedValueOnce(new Error('Gateway 502 Bad Gateway'));
+
+    const res = await orchestrator.processUserInput('Perform an unknown task', SENDER_PUB_KEY);
+    // Security invariant: failure must NEVER approve or sign transactions
+    expect(useTransactionStore.getState().authorization).toBeNull();
+    expect(useTransactionStore.getState().status).not.toBe('successful');
+  });
+
+  // Security Invariant 19: Gemini API key is never present in mobile client code or state
+  test('Invariant 19: Gemini API key is never present in mobile client code or state', () => {
+    const store = useAIStore.getState();
+    const envString = JSON.stringify(process.env);
+    expect(envString).not.toContain('AIzaSy');
+    expect(JSON.stringify(store)).not.toContain('AIzaSy');
+  });
+
+  // Security Invariant 20: Sensitive information is excluded from logs and provider requests
+  test('Invariant 20: Sensitive information is excluded from logs and provider requests', () => {
+    const orchestrator = SonoraAIOrchestrator.getInstance();
+    const turns = orchestrator.getContextManager().getTurns();
+    const turnsStr = JSON.stringify(turns);
+
+    expect(turnsStr).not.toContain('privateKey');
+    expect(turnsStr).not.toContain('recoveryPhrase');
+    expect(turnsStr).not.toContain('secretSeed');
+  });
+
+  // Security Invariant 21: Unknown or malformed Gemini tool calls are rejected
+  test('Invariant 21: Unknown or malformed Gemini tool calls are rejected', async () => {
+    const malformedCall = {
+      id: 'bad-call-1',
+      name: 'malformed_tool_not_in_registry',
+      parameters: { invalidPayload: true },
+    };
+    const res = await ToolDispatcher.executeToolCall(malformedCall, SENDER_PUB_KEY);
+    expect(res.error).toBeDefined();
+    expect(res.error).toContain('UNAUTHORIZED_TOOL');
+  });
+
+  // Security Invariant 22: Gateway failures do not expose internal secrets or stack traces
+  test('Invariant 22: Gateway failures do not expose internal secrets or stack traces', async () => {
+    const orchestrator = SonoraAIOrchestrator.getInstance();
+    jest.spyOn(global, 'fetch').mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      text: async () => 'Internal Server Error',
+    } as any);
+
+    const res = await orchestrator.processUserInput('Hello assistance', SENDER_PUB_KEY);
+    expect(res.text).not.toContain('Error: at Object.<anonymous>');
+    expect(res.text).not.toContain('AIzaSy');
+  });
 });

@@ -53,11 +53,11 @@ export class ProviderFactory {
         break;
 
       case 'gemini':
-        if (config.apiKey && config.apiKey.trim().length > 0) {
-          this.currentProvider = new GeminiProvider(config);
-        } else {
+        if (config.gatewayUrl === 'offline' || config.baseUrl === 'offline') {
           this.currentProvider = new MockAIProvider();
           this.providerType = 'mock';
+        } else {
+          this.currentProvider = new GeminiProvider(config);
         }
         break;
 

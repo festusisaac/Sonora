@@ -21,6 +21,7 @@ ios/
 .env.development.local
 .env.test.local
 .env.production.local
+sonora-ai-gateway/.env
 
 # Logs
 npm-debug.log*

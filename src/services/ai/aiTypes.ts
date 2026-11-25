@@ -108,5 +108,7 @@ export interface AIProviderConfig {
   apiKey?: string;
   modelName?: string;
   baseUrl?: string;
+  gatewayUrl?: string;
+  gatewayAuthToken?: string;
   timeoutMs?: number;
 }

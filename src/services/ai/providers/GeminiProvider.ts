@@ -8,111 +8,90 @@ import {
 } from '../aiTypes';
 
 /**
- * Google Gemini Provider implementation
- * Uses Gemini REST API with Function Declarations.
- * Strictly adheres to non-custodial constraints.
+ * Google Gemini Provider via SONORA AI Gateway
+ *
+ * CRITICAL SECURITY INVARIANT:
+ * - This client communicates ONLY with the trusted SONORA AI Gateway.
+ * - The Gemini API key is NEVER stored or handled on the mobile device.
+ * - All tool calls returned by Gemini are treated as requests and independently
+ *   validated by the mobile application policy engine.
  */
 export class GeminiProvider implements AIProvider {
   readonly name = 'GeminiProvider';
-  private apiKey: string;
-  private modelName: string;
+  private gatewayUrl: string;
+  private gatewayAuthToken: string;
   private timeoutMs: number;
 
   constructor(config: AIProviderConfig = {}) {
-    this.apiKey = config.apiKey || '';
-    this.modelName = config.modelName || 'gemini-1.5-flash';
+    // Default to local gateway port 3001 (or Android loopback 10.0.2.2:3001 when on emulator)
+    this.gatewayUrl = (
+      config.gatewayUrl ||
+      config.baseUrl ||
+      'http://localhost:3001'
+    ).replace(/\/+$/, '');
+    this.gatewayAuthToken = config.gatewayAuthToken || 'sonora_dev_secret_auth_token_replace_in_prod';
     this.timeoutMs = config.timeoutMs || 15000;
   }
 
   isConfigured(): boolean {
-    return Boolean(this.apiKey && this.apiKey.trim().length > 0);
+    return Boolean(this.gatewayUrl && this.gatewayUrl.trim().length > 0);
+  }
+
+  getGatewayUrl(): string {
+    return this.gatewayUrl;
   }
 
   async generateResponse(
     messages: ConversationTurn[],
     tools: ToolDefinition[],
-    _context?: Record<string, unknown>
+    context?: Record<string, unknown>
   ): Promise<AIResponse> {
     if (!this.isConfigured()) {
-      throw new Error('Gemini Provider is not configured with an API key.');
+      throw new Error('Gemini Gateway Provider is not configured with a valid gateway URL.');
     }
 
-    const systemInstruction = {
-      role: 'system',
-      parts: [
-        {
-          text: `You are SONORA, a secure voice wallet companion for blind and visually impaired users.
-SECURITY INVARIANTS:
-1. You NEVER sign transactions.
-2. You NEVER access private keys or recovery phrases.
-3. You NEVER authorize payments autonomously.
-4. When the user wants to send a payment, gather details and call preparePayment.
-Provide short, spoken responses.`,
-        },
-      ],
-    };
-
-    const contents = messages
-      .filter((m) => m.role === 'user' || m.role === 'assistant')
-      .map((m) => ({
-        role: m.role === 'assistant' ? 'model' : 'user',
-        parts: [{ text: m.content }],
-      }));
-
-    const functionDeclarations = tools.map((t) => ({
-      name: t.name,
-      description: t.description,
-      parameters: t.parameters,
+    const payloadMessages = messages.map((m) => ({
+      role: m.role,
+      content: m.content,
+      toolCallId: m.toolCallId,
     }));
-
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${this.modelName}:generateContent?key=${this.apiKey}`;
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), this.timeoutMs);
 
     try {
-      const response = await fetch(url, {
+      const response = await fetch(`${this.gatewayUrl}/v1/ai/chat`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${this.gatewayAuthToken}`,
+          'x-sonora-client': 'mobile-app',
+        },
         body: JSON.stringify({
-          systemInstruction,
-          contents,
-          tools: functionDeclarations.length > 0 ? [{ functionDeclarations }] : undefined,
-          generationConfig: {
-            temperature: 0.2,
-          },
+          messages: payloadMessages,
+          tools,
+          context,
         }),
         signal: controller.signal,
       });
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`Gemini API error (${response.status}): ${errorText}`);
+        throw new Error(`SONORA Gateway error (${response.status}): ${errorText}`);
       }
 
-      const data = await response.json();
-      const candidate = data.candidates?.[0];
-      const parts = candidate?.content?.parts || [];
-
-      let text = '';
-      const toolCalls: AIToolCall[] = [];
-
-      for (const part of parts) {
-        if (part.text) {
-          text += part.text;
-        }
-        if (part.functionCall) {
-          toolCalls.push({
-            id: `gemini-call-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-            name: part.functionCall.name,
-            parameters: part.functionCall.args || {},
-          });
-        }
-      }
+      const data = (await response.json()) as {
+        text?: string;
+        toolCalls?: AIToolCall[];
+        intent?: string;
+        suggestedQuickReplies?: string[];
+      };
 
       return {
-        text: text.trim() || (toolCalls.length > 0 ? 'Executing request...' : ''),
-        toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
+        text: data.text || '',
+        toolCalls: data.toolCalls,
+        intent: (data.intent as any) || undefined,
+        suggestedQuickReplies: data.suggestedQuickReplies,
       };
     } finally {
       clearTimeout(timeoutId);

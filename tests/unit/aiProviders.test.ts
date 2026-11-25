@@ -18,13 +18,13 @@ describe('AI Providers & Factory', () => {
     expect(provider.isConfigured()).toBe(true);
   });
 
-  test('ProviderFactory falls back to MockAIProvider if apiKey is empty', () => {
+  test('ProviderFactory falls back to MockAIProvider if provider is set to offline', () => {
     const factory = ProviderFactory.getInstance();
     factory.configureProvider('openai', { apiKey: '' });
     expect(factory.getProviderType()).toBe('mock');
     expect(factory.getProvider()).toBeInstanceOf(MockAIProvider);
 
-    factory.configureProvider('gemini', { apiKey: '   ' });
+    factory.configureProvider('gemini', { gatewayUrl: 'offline' });
     expect(factory.getProviderType()).toBe('mock');
     expect(factory.getProvider()).toBeInstanceOf(MockAIProvider);
   });
@@ -37,12 +37,13 @@ describe('AI Providers & Factory', () => {
     expect(provider.isConfigured()).toBe(true);
   });
 
-  test('ProviderFactory instantiates GeminiProvider when valid key is provided', () => {
+  test('ProviderFactory instantiates GeminiProvider targeting the SONORA AI Gateway', () => {
     const factory = ProviderFactory.getInstance();
-    const provider = factory.configureProvider('gemini', { apiKey: 'gemini-test-key-12345' });
+    const provider = factory.configureProvider('gemini', { gatewayUrl: 'http://localhost:3001' });
     expect(factory.getProviderType()).toBe('gemini');
     expect(provider).toBeInstanceOf(GeminiProvider);
     expect(provider.isConfigured()).toBe(true);
+    expect((provider as GeminiProvider).getGatewayUrl()).toBe('http://localhost:3001');
   });
 
   test('MockAIProvider resolves balance inquiry with getBalances tool call', async () => {
