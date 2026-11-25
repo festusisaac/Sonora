@@ -154,10 +154,10 @@ export default function CreateWalletScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.milky,
   },
   container: {
-    padding: spacing.lg,
+    padding: spacing.md,
     paddingBottom: spacing.xxl,
   },
   header: {
@@ -165,23 +165,27 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 26,
-    color: colors.primary,
+    color: colors.black,
+    fontWeight: '800',
   },
   subtitle: {
-    color: colors.textSecondary,
+    color: colors.secondary,
     marginTop: spacing.xs,
   },
   warningCard: {
     borderLeftWidth: 4,
     borderLeftColor: colors.warning,
     marginBottom: spacing.lg,
+    backgroundColor: colors.white,
+    borderColor: colors.border,
   },
   warningTitle: {
     color: colors.warning,
     marginBottom: spacing.xs,
+    fontWeight: '700',
   },
   warningBody: {
-    color: colors.textPrimary,
+    color: colors.black,
     lineHeight: 20,
   },
   instructionButton: {
@@ -197,9 +201,9 @@ const styles = StyleSheet.create({
   wordBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surfaceRaised,
-    borderWidth: 1,
-    borderColor: colors.surfaceBorder,
+    backgroundColor: colors.white,
+    borderWidth: 1.5,
+    borderColor: colors.border,
     borderRadius: 8,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
@@ -207,13 +211,13 @@ const styles = StyleSheet.create({
     minHeight: 48,
   },
   wordNumber: {
-    color: colors.accent,
+    color: colors.secondary,
     fontWeight: 'bold',
     marginRight: spacing.sm,
   },
   wordText: {
-    color: colors.textPrimary,
-    fontWeight: '600',
+    color: colors.black,
+    fontWeight: '700',
   },
   actionsContainer: {
     gap: spacing.md,

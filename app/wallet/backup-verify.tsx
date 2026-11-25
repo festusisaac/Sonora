@@ -165,10 +165,10 @@ export default function BackupVerifyScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.milky,
   },
   container: {
-    padding: spacing.lg,
+    padding: spacing.md,
     paddingBottom: spacing.xxl,
   },
   header: {
@@ -176,24 +176,32 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 26,
-    color: colors.primary,
+    color: colors.black,
+    fontWeight: '800',
   },
   subtitle: {
-    color: colors.textSecondary,
+    color: colors.secondary,
     marginTop: spacing.xs,
   },
   instructionsCard: {
     marginBottom: spacing.lg,
+    backgroundColor: colors.white,
+    borderColor: colors.border,
+    borderWidth: 1.5,
   },
   instructionsText: {
-    color: colors.textSecondary,
+    color: colors.black,
     lineHeight: 20,
   },
   questionCard: {
     marginBottom: spacing.md,
+    backgroundColor: colors.white,
+    borderColor: colors.border,
+    borderWidth: 1.5,
   },
   questionTitle: {
-    color: colors.accent,
+    color: colors.black,
+    fontWeight: '700',
     marginBottom: spacing.md,
     letterSpacing: 1,
   },

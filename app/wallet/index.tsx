@@ -318,10 +318,10 @@ export default function WalletScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.milky,
   },
   container: {
-    padding: spacing.lg,
+    padding: spacing.md,
     paddingBottom: spacing.xxl,
   },
   emptyContainer: {
@@ -332,21 +332,26 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 26,
-    color: colors.primary,
+    color: colors.black,
+    fontWeight: '800',
   },
   subtitle: {
-    color: colors.textSecondary,
+    color: colors.secondary,
     marginTop: spacing.xs,
   },
   card: {
     marginBottom: spacing.md,
+    backgroundColor: colors.white,
+    borderColor: colors.border,
+    borderWidth: 1.5,
   },
   cardHeader: {
-    color: colors.primary,
+    color: colors.black,
+    fontWeight: '700',
     marginBottom: spacing.sm,
   },
   cardBody: {
-    color: colors.textSecondary,
+    color: colors.secondary,
     lineHeight: 20,
     marginBottom: spacing.md,
   },
@@ -360,20 +365,23 @@ const styles = StyleSheet.create({
     borderLeftWidth: 4,
     borderLeftColor: colors.warning,
     marginBottom: spacing.md,
+    backgroundColor: colors.white,
+    borderColor: colors.border,
   },
   unverifiedTitle: {
     color: colors.warning,
     marginBottom: spacing.xs,
+    fontWeight: '700',
   },
   unverifiedBody: {
-    color: colors.textPrimary,
+    color: colors.black,
     lineHeight: 20,
   },
   verifyBtn: {
     marginTop: spacing.sm,
   },
   backedUpBadge: {
-    backgroundColor: colors.surfaceRaised,
+    backgroundColor: colors.milky,
     borderRadius: 8,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
@@ -386,20 +394,22 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   label: {
-    color: colors.primary,
+    color: colors.secondary,
+    fontWeight: '700',
     marginBottom: spacing.xs,
   },
   value: {
     fontSize: 22,
-    color: colors.textPrimary,
+    color: colors.black,
+    fontWeight: '700',
   },
   subvalue: {
     marginTop: spacing.xs,
-    color: colors.textMuted,
+    color: colors.secondary,
   },
   address: {
     fontFamily: 'monospace',
-    color: colors.textSecondary,
+    color: colors.black,
     marginTop: spacing.xs,
     fontSize: 14,
     lineHeight: 20,
@@ -415,14 +425,16 @@ const styles = StyleSheet.create({
   },
   balanceAmount: {
     fontSize: 28,
-    color: colors.textPrimary,
+    color: colors.black,
+    fontWeight: '800',
   },
   balanceCode: {
     fontSize: 18,
-    color: colors.accent,
+    color: colors.secondary,
+    fontWeight: '700',
   },
   emptyBalanceText: {
-    color: colors.textMuted,
+    color: colors.secondary,
     marginVertical: spacing.sm,
   },
   balanceActions: {
@@ -436,15 +448,17 @@ const styles = StyleSheet.create({
   fundingCard: {
     marginTop: spacing.sm,
     marginBottom: spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.accent,
+    borderWidth: 1.5,
+    borderColor: colors.yellow,
+    backgroundColor: colors.white,
   },
   fundingLabel: {
-    color: colors.accent,
+    color: colors.black,
+    fontWeight: '700',
     marginBottom: spacing.xs,
   },
   fundingBody: {
-    color: colors.textSecondary,
+    color: colors.secondary,
     marginBottom: spacing.md,
   },
   fundingBtn: {
@@ -452,8 +466,9 @@ const styles = StyleSheet.create({
   },
   fundingStatus: {
     marginTop: spacing.sm,
-    color: colors.textPrimary,
+    color: colors.black,
     textAlign: 'center',
+    fontWeight: '600',
   },
   dangerZone: {
     marginTop: spacing.md,

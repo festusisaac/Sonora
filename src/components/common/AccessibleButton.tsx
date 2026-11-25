@@ -55,28 +55,28 @@ export const AccessibleButton: React.FC<AccessibleButtonProps> = ({
   };
 
   const getBackgroundColor = () => {
-    if (disabled) return colors.surfaceBorder;
+    if (disabled) return colors.border;
     switch (variant) {
       case 'secondary':
-        return colors.surfaceRaised;
+        return colors.white;
       case 'danger':
         return colors.danger;
       case 'primary':
       default:
-        return colors.primary;
+        return colors.yellow;
     }
   };
 
   const getTextColor = () => {
-    if (disabled) return colors.textMuted;
+    if (disabled) return colors.secondary;
     switch (variant) {
       case 'secondary':
-        return colors.textPrimary;
+        return colors.black;
       case 'danger':
-        return colors.dangerText;
+        return colors.white;
       case 'primary':
       default:
-        return colors.primaryText;
+        return colors.black;
     }
   };
 

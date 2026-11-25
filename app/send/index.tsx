@@ -280,10 +280,10 @@ export default function SendScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.milky,
   },
   container: {
-    padding: spacing.lg,
+    padding: spacing.md,
     paddingBottom: spacing.xxl,
   },
   header: {
@@ -291,27 +291,31 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 26,
-    color: colors.primary,
+    color: colors.black,
+    fontWeight: '800',
   },
   subtitle: {
-    color: colors.textSecondary,
+    color: colors.secondary,
     marginTop: spacing.xs,
   },
   balanceCard: {
     marginBottom: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.surfaceBorder,
+    backgroundColor: colors.white,
+    borderWidth: 1.5,
+    borderColor: colors.border,
   },
   balanceLabel: {
-    color: colors.primary,
+    color: colors.secondary,
+    fontWeight: '700',
     marginBottom: spacing.xs,
   },
   balanceAmount: {
     fontSize: 28,
-    color: colors.textPrimary,
+    color: colors.black,
+    fontWeight: '800',
   },
   reserveNote: {
-    color: colors.textMuted,
+    color: colors.secondary,
     marginTop: spacing.xs,
   },
   guidanceBtn: {
@@ -320,18 +324,22 @@ const styles = StyleSheet.create({
   },
   card: {
     marginBottom: spacing.md,
+    backgroundColor: colors.white,
+    borderWidth: 1.5,
+    borderColor: colors.border,
   },
   cardLabel: {
-    color: colors.primary,
+    color: colors.black,
+    fontWeight: '700',
     marginBottom: spacing.xs,
   },
   input: {
-    backgroundColor: colors.surfaceRaised,
-    borderColor: colors.surfaceBorder,
-    borderWidth: 1,
-    borderRadius: 8,
+    backgroundColor: colors.milky,
+    borderColor: colors.border,
+    borderWidth: 1.5,
+    borderRadius: 12,
     padding: spacing.md,
-    color: colors.textPrimary,
+    color: colors.black,
     fontSize: 16,
     minHeight: 48,
   },

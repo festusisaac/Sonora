@@ -315,10 +315,10 @@ export default function ConfirmScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.milky,
   },
   container: {
-    padding: spacing.lg,
+    padding: spacing.md,
     paddingBottom: spacing.xxl,
   },
   emptyContainer: {
@@ -327,14 +327,15 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 26,
-    color: colors.primary,
+    color: colors.black,
+    fontWeight: '800',
   },
   subtitle: {
-    color: colors.textSecondary,
+    color: colors.secondary,
     marginTop: spacing.xs,
   },
   emptyBody: {
-    color: colors.textMuted,
+    color: colors.secondary,
     marginVertical: spacing.lg,
     textAlign: 'center',
   },
@@ -348,25 +349,32 @@ const styles = StyleSheet.create({
     borderLeftWidth: 4,
     borderLeftColor: colors.warning,
     marginBottom: spacing.md,
+    backgroundColor: colors.white,
+    borderColor: colors.border,
   },
   warningTitle: {
     color: colors.warning,
     marginBottom: spacing.xs,
+    fontWeight: '700',
   },
   warningBody: {
-    color: colors.textPrimary,
+    color: colors.black,
     lineHeight: 20,
   },
   card: {
     marginBottom: spacing.md,
+    backgroundColor: colors.white,
+    borderWidth: 1.5,
+    borderColor: colors.border,
   },
   fieldLabel: {
-    color: colors.primary,
+    color: colors.secondary,
     marginBottom: spacing.xs,
+    fontWeight: '700',
   },
   addressValue: {
     fontFamily: 'monospace',
-    color: colors.textPrimary,
+    color: colors.black,
     fontSize: 14,
     lineHeight: 20,
   },
@@ -374,18 +382,19 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
   },
   labelValue: {
-    color: colors.textSecondary,
+    color: colors.black,
   },
   newAccountBadge: {
-    backgroundColor: colors.surfaceRaised,
+    backgroundColor: colors.milky,
     borderRadius: 6,
     padding: spacing.sm,
     marginTop: spacing.sm,
     borderWidth: 1,
-    borderColor: colors.accent,
+    borderColor: colors.yellow,
   },
   newAccountText: {
-    color: colors.accent,
+    color: colors.black,
+    fontWeight: '600',
   },
   amountRow: {
     flexDirection: 'row',
@@ -395,15 +404,17 @@ const styles = StyleSheet.create({
   },
   amountValue: {
     fontSize: 32,
-    color: colors.textPrimary,
+    color: colors.black,
+    fontWeight: '800',
   },
   assetCode: {
     fontSize: 20,
-    color: colors.accent,
+    color: colors.secondary,
+    fontWeight: '700',
   },
   divider: {
     height: 1,
-    backgroundColor: colors.surfaceBorder,
+    backgroundColor: colors.border,
     marginVertical: spacing.sm,
   },
   feeRow: {
@@ -413,28 +424,29 @@ const styles = StyleSheet.create({
     marginVertical: spacing.xs,
   },
   feeLabel: {
-    color: colors.textSecondary,
+    color: colors.secondary,
   },
   feeValue: {
-    color: colors.textPrimary,
+    color: colors.black,
+    fontWeight: '600',
   },
   totalLabel: {
-    color: colors.primary,
+    color: colors.black,
     fontWeight: 'bold',
   },
   totalValue: {
-    color: colors.primary,
+    color: colors.black,
     fontWeight: 'bold',
   },
   memoSection: {
     marginTop: spacing.xs,
   },
   memoText: {
-    color: colors.textPrimary,
+    color: colors.black,
     marginTop: spacing.xs,
   },
   networkBadge: {
-    color: colors.accent,
+    color: colors.black,
     fontWeight: 'bold',
   },
   summaryBtn: {
@@ -446,11 +458,14 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     marginBottom: spacing.md,
     gap: spacing.sm,
+    backgroundColor: colors.white,
+    borderColor: colors.border,
   },
   processingText: {
-    color: colors.primary,
+    color: colors.black,
     marginTop: spacing.xs,
     textAlign: 'center',
+    fontWeight: '600',
   },
   errorText: {
     color: colors.danger,
@@ -468,29 +483,35 @@ const styles = StyleSheet.create({
     borderLeftWidth: 4,
     borderLeftColor: colors.success,
     marginBottom: spacing.md,
+    backgroundColor: colors.white,
+    borderColor: colors.border,
   },
   successTitle: {
     color: colors.success,
     marginBottom: spacing.xs,
+    fontWeight: '800',
   },
   successBody: {
-    color: colors.textPrimary,
+    color: colors.black,
     lineHeight: 22,
     marginBottom: spacing.md,
   },
   receiptRow: {
-    backgroundColor: colors.surfaceRaised,
+    backgroundColor: colors.milky,
     padding: spacing.md,
     borderRadius: 8,
     marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   receiptLabel: {
-    color: colors.textMuted,
+    color: colors.secondary,
     marginBottom: spacing.xs,
+    fontWeight: '600',
   },
   hashText: {
     fontFamily: 'monospace',
-    color: colors.textSecondary,
+    color: colors.black,
     fontSize: 12,
   },
   copyBtn: {

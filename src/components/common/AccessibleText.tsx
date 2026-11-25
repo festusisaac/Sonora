@@ -48,7 +48,7 @@ export const AccessibleText: React.FC<AccessibleTextProps> = ({
 
 const styles = StyleSheet.create({
   base: {
-    color: colors.textPrimary,
+    color: colors.black,
   },
   title: {
     fontSize: typography.fontSizes.xxl,
@@ -58,7 +58,7 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: typography.fontSizes.lg,
     fontWeight: typography.fontWeights.semibold,
-    color: colors.textSecondary,
+    color: colors.secondary,
     lineHeight: typography.fontSizes.lg * typography.lineHeights.normal,
   },
   body: {
@@ -68,11 +68,11 @@ const styles = StyleSheet.create({
   },
   caption: {
     fontSize: typography.fontSizes.sm,
-    color: colors.textMuted,
+    color: colors.secondary,
   },
   label: {
     fontSize: typography.fontSizes.sm,
     fontWeight: typography.fontWeights.medium,
-    color: colors.textSecondary,
+    color: colors.secondary,
   },
 });

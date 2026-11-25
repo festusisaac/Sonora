@@ -165,10 +165,10 @@ export default function HistoryScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.milky,
   },
   container: {
-    padding: spacing.lg,
+    padding: spacing.md,
     paddingBottom: spacing.xxl,
   },
   header: {
@@ -176,10 +176,11 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 26,
-    color: colors.primary,
+    color: colors.black,
+    fontWeight: '800',
   },
   subtitle: {
-    color: colors.textSecondary,
+    color: colors.secondary,
     marginTop: spacing.xs,
   },
   topActions: {
@@ -196,7 +197,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   loadingText: {
-    color: colors.textMuted,
+    color: colors.secondary,
   },
   errorText: {
     color: colors.danger,
@@ -206,14 +207,20 @@ const styles = StyleSheet.create({
   emptyCard: {
     padding: spacing.lg,
     marginVertical: spacing.md,
+    backgroundColor: colors.white,
+    borderColor: colors.border,
+    borderWidth: 1.5,
   },
   emptyText: {
-    color: colors.textSecondary,
+    color: colors.secondary,
     textAlign: 'center',
     lineHeight: 22,
   },
   itemCard: {
     marginBottom: spacing.md,
+    backgroundColor: colors.white,
+    borderColor: colors.border,
+    borderWidth: 1.5,
   },
   row: {
     flexDirection: 'row',
@@ -229,11 +236,12 @@ const styles = StyleSheet.create({
   },
   itemAmount: {
     fontSize: 20,
-    color: colors.textPrimary,
+    color: colors.black,
+    fontWeight: '800',
   },
   counterparty: {
     fontFamily: 'monospace',
-    color: colors.textMuted,
+    color: colors.secondary,
     marginTop: spacing.xs,
   },
   footerRow: {
@@ -242,15 +250,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: colors.surfaceBorder,
+    borderTopColor: colors.border,
     paddingTop: spacing.xs,
   },
   timestamp: {
-    color: colors.textMuted,
+    color: colors.secondary,
   },
   hashLink: {
-    color: colors.accent,
+    color: colors.black,
     fontFamily: 'monospace',
+    fontWeight: '700',
   },
   loadMoreBtn: {
     marginTop: spacing.md,

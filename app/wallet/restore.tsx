@@ -164,10 +164,10 @@ export default function RestoreWalletScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.milky,
   },
   container: {
-    padding: spacing.lg,
+    padding: spacing.md,
     paddingBottom: spacing.xxl,
   },
   header: {
@@ -175,26 +175,31 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 26,
-    color: colors.primary,
+    color: colors.black,
+    fontWeight: '800',
   },
   subtitle: {
-    color: colors.textSecondary,
+    color: colors.secondary,
     marginTop: spacing.xs,
   },
   inputCard: {
     marginBottom: spacing.md,
+    backgroundColor: colors.white,
+    borderColor: colors.border,
+    borderWidth: 1.5,
   },
   inputLabel: {
-    color: colors.primary,
+    color: colors.black,
+    fontWeight: '700',
     marginBottom: spacing.sm,
   },
   textInput: {
-    backgroundColor: colors.surfaceRaised,
-    borderColor: colors.surfaceBorder,
-    borderWidth: 1,
-    borderRadius: 8,
+    backgroundColor: colors.milky,
+    borderColor: colors.border,
+    borderWidth: 1.5,
+    borderRadius: 12,
     padding: spacing.md,
-    color: colors.textPrimary,
+    color: colors.black,
     fontSize: 16,
     lineHeight: 24,
     minHeight: 120,
@@ -207,7 +212,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
   },
   counterText: {
-    color: colors.textSecondary,
+    color: colors.secondary,
   },
   clearBtn: {
     paddingHorizontal: spacing.sm,

@@ -13,19 +13,21 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <QueryProvider>
         <ThemeProvider>
-          <StatusBar style="light" />
+          <StatusBar style="dark" />
           <Stack
             screenOptions={{
               headerStyle: {
-                backgroundColor: colors.background,
+                backgroundColor: colors.milky,
               },
-              headerTintColor: colors.textPrimary,
+              headerTintColor: colors.black,
               headerTitleStyle: {
                 fontWeight: 'bold',
+                color: colors.black,
               },
               contentStyle: {
-                backgroundColor: colors.background,
+                backgroundColor: colors.milky,
               },
+              headerShadowVisible: false,
             }}
           >
             <Stack.Screen
