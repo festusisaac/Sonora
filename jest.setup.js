@@ -13,21 +13,20 @@ jest.mock('expo-speech', () => ({
   },
 }));
 
-// Mock expo-av
-jest.mock('expo-av', () => ({
-  Audio: {
-    Sound: {
-      createAsync: jest.fn().mockResolvedValue({
-        sound: {
-          playAsync: jest.fn().mockResolvedValue(undefined),
-          stopAsync: jest.fn().mockResolvedValue(undefined),
-          unloadAsync: jest.fn().mockResolvedValue(undefined),
-        },
-        status: { isLoaded: true },
-      }),
-    },
-    setAudioModeAsync: jest.fn().mockResolvedValue(undefined),
-  },
+// Mock expo-audio
+jest.mock('expo-audio', () => ({
+  createAudioPlayer: jest.fn().mockReturnValue({
+    play: jest.fn(),
+    pause: jest.fn(),
+    remove: jest.fn(),
+    playing: false,
+    addListener: jest.fn().mockReturnValue({ remove: jest.fn() }),
+  }),
+  useAudioPlayer: jest.fn().mockReturnValue({
+    play: jest.fn(),
+    pause: jest.fn(),
+    playing: false,
+  }),
 }));
 
 // Mock expo-speech-recognition

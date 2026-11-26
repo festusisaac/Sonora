@@ -1,4 +1,4 @@
-import { Audio } from 'expo-av';
+import { createAudioPlayer, AudioPlayer } from 'expo-audio';
 import * as Speech from 'expo-speech';
 import Constants from 'expo-constants';
 
@@ -40,8 +40,7 @@ export class TTSService {
   private static cachedVoiceIdentifier: string | null = null;
   private static isDiscoveringVoice = false;
 
-  private static currentSound: Audio.Sound | null = null;
-  private static isPlayingAudioSound = false;
+  private static currentPlayer: AudioPlayer | null = null;
   private static gatewayToken = 'sonora_dev_secret_auth_token_replace_in_prod';
 
   /**
@@ -118,27 +117,20 @@ export class TTSService {
       const encodedText = encodeURIComponent(text);
       const streamUrl = `${gatewayUrl}/v1/tts/stream?token=${this.gatewayToken}&text=${encodedText}`;
 
-      // Set audio mode for mobile playback
-      await Audio.setAudioModeAsync({
-        playsInSilentModeIOS: true,
-        staysActiveInBackground: false,
-        shouldDuckAndroid: true,
-      });
+      const player = createAudioPlayer({ uri: streamUrl });
+      this.currentPlayer = player;
 
-      const { sound } = await Audio.Sound.createAsync(
-        { uri: streamUrl },
-        { shouldPlay: true },
-        (status) => {
-          if (status.isLoaded && status.didJustFinish) {
-            this.isPlayingAudioSound = false;
-            options?.onDone?.();
-            sound.unloadAsync().catch(() => {});
+      player.addListener('playbackStatusUpdate', (status) => {
+        if (status.didJustFinish) {
+          options?.onDone?.();
+          player.remove();
+          if (this.currentPlayer === player) {
+            this.currentPlayer = null;
           }
         }
-      );
+      });
 
-      this.currentSound = sound;
-      this.isPlayingAudioSound = true;
+      player.play();
       return true;
     } catch {
       return false;
@@ -175,12 +167,11 @@ export class TTSService {
    */
   public static async stop(): Promise<void> {
     try {
-      if (this.currentSound) {
-        await this.currentSound.stopAsync().catch(() => {});
-        await this.currentSound.unloadAsync().catch(() => {});
-        this.currentSound = null;
+      if (this.currentPlayer) {
+        this.currentPlayer.pause();
+        this.currentPlayer.remove();
+        this.currentPlayer = null;
       }
-      this.isPlayingAudioSound = false;
       await Speech.stop().catch(() => {});
     } catch {
       // Ignore errors when stopping
@@ -191,7 +182,7 @@ export class TTSService {
    * Check if speech is currently playing
    */
   public static async isSpeaking(): Promise<boolean> {
-    if (this.isPlayingAudioSound) {
+    if (this.currentPlayer && this.currentPlayer.playing) {
       return true;
     }
     return Speech.isSpeakingAsync();
