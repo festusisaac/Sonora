@@ -37,6 +37,16 @@
         {
           "microphonePermission": "Allow SONORA to access the microphone for voice-guided wallet navigation."
         }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableProguardInReleaseBuilds": false,
+            "enableShrinkResourcesInReleaseBuilds": false,
+            "extraProguardRules": "-dontwarn **"
+          }
+        }
       ]
     ],
     "experiments": {
