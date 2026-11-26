@@ -21,7 +21,8 @@ function resolveDefaultGatewayUrl(): string {
   } catch {
     // ignore
   }
-  return 'http://localhost:3001';
+  // Default to developer's local network Wi-Fi IP so physical Android APKs can reach the gateway
+  return 'http://192.168.1.104:3001';
 }
 
 /**
@@ -42,6 +43,8 @@ export class TTSService {
 
   private static currentPlayer: AudioPlayer | null = null;
   private static gatewayToken = 'sonora_dev_secret_auth_token_replace_in_prod';
+  private static isGatewayTTSAvailable: boolean | null = null;
+  private static lastHealthCheck = 0;
 
   /**
    * Discovers the most natural, highest-quality voice installed on the device.
@@ -84,6 +87,40 @@ export class TTSService {
   }
 
   /**
+   * Checks whether the AI Gateway's ElevenLabs service is available with a 1.2s timeout
+   */
+  private static async checkGatewayTTSAvailability(): Promise<boolean> {
+    const now = Date.now();
+    // Cache availability check for 30 seconds
+    if (this.isGatewayTTSAvailable !== null && now - this.lastHealthCheck < 30000) {
+      return this.isGatewayTTSAvailable;
+    }
+
+    try {
+      const gatewayUrl = resolveDefaultGatewayUrl();
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 1200);
+
+      const res = await fetch(`${gatewayUrl}/v1/tts/status`, {
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      if (res.ok) {
+        const data = await res.json();
+        this.isGatewayTTSAvailable = Boolean(data.configured);
+      } else {
+        this.isGatewayTTSAvailable = false;
+      }
+    } catch {
+      this.isGatewayTTSAvailable = false;
+    }
+
+    this.lastHealthCheck = now;
+    return this.isGatewayTTSAvailable;
+  }
+
+  /**
    * Speak a phrase to the user.
    * Attempts ElevenLabs via AI Gateway first, falls back seamlessly to device TTS.
    */
@@ -92,10 +129,13 @@ export class TTSService {
       // Always stop previous audio first
       await this.stop();
 
-      // Attempt Tier 1: ElevenLabs synthesis via Gateway
-      const playedViaElevenLabs = await this.playElevenLabsAudio(text, options);
-      if (playedViaElevenLabs) {
-        return;
+      // Check if Gateway + ElevenLabs is ready
+      const canUseGateway = await this.checkGatewayTTSAvailability();
+      if (canUseGateway) {
+        const playedViaElevenLabs = await this.playElevenLabsAudio(text, options);
+        if (playedViaElevenLabs) {
+          return;
+        }
       }
     } catch {
       // Silence warning, proceed to Tier 2 fallback immediately
@@ -120,8 +160,11 @@ export class TTSService {
       const player = createAudioPlayer({ uri: streamUrl });
       this.currentPlayer = player;
 
+      let hasFinished = false;
+
       player.addListener('playbackStatusUpdate', (status) => {
-        if (status.didJustFinish) {
+        if (status.didJustFinish && !hasFinished) {
+          hasFinished = true;
           options?.onDone?.();
           player.remove();
           if (this.currentPlayer === player) {

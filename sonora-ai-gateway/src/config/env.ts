@@ -12,7 +12,7 @@ const envSchema = z.object({
   GEMINI_MAX_OUTPUT_TOKENS: z.coerce.number().default(1024),
   GATEWAY_AUTH_TOKEN: z.string().default('sonora_dev_secret_auth_token_replace_in_prod'),
   ELEVENLABS_API_KEY: z.string().default(''),
-  ELEVENLABS_VOICE_ID: z.string().default('21m00Tcm4TlvDq8ikWAM'), // Default to 'Rachel' (warm, clear, natural)
+  ELEVENLABS_VOICE_ID: z.string().default('EXAVITQu4vr4xnSDxMaL'), // Default to 'Sarah' (premade, works on free tier)
   RATE_LIMIT_MAX: z.coerce.number().default(60),
   RATE_LIMIT_WINDOW_MS: z.coerce.number().default(60000),
 });

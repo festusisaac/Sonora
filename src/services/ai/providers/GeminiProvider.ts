@@ -19,7 +19,8 @@ function resolveDefaultGatewayUrl(): string {
   } catch {
     // ignore
   }
-  return 'http://localhost:3001';
+  // Default to developer's local network Wi-Fi IP so physical Android APKs can reach the gateway
+  return 'http://192.168.1.104:3001';
 }
 
 /**

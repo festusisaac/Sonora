@@ -14,6 +14,7 @@ import { VoiceOrb } from '../src/components/assistant/VoiceOrb';
 import { TransactionReview } from '../src/components/wallet/TransactionReview';
 import { useSonoraAssistant } from '../src/hooks/useSonoraAssistant';
 import { useWalletStore } from '../src/store/walletStore';
+import { TTSService } from '../src/services/speech/tts';
 import { HapticsService } from '../src/services/device/haptics';
 import { colors } from '../src/theme/colors';
 import { spacing } from '../src/theme/spacing';
@@ -38,16 +39,19 @@ export default function HomeScreen() {
   // Spoken greeting on first launch
   useEffect(() => {
     let isMounted = true;
-    Promise.resolve().then(() => {
+    const timer = setTimeout(() => {
       if (isMounted) {
         const welcomeSpeech = publicKey
           ? 'Welcome to SONORA. Tap the center orb to speak.'
           : 'Welcome to SONORA. Your voice-first Stellar wallet. Tap the center orb to begin.';
         setAnnouncement(welcomeSpeech);
+        TTSService.speak(welcomeSpeech).catch(() => {});
       }
-    });
+    }, 400);
+
     return () => {
       isMounted = false;
+      clearTimeout(timer);
     };
   }, [publicKey]);
 

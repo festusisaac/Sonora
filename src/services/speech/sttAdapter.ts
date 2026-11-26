@@ -63,7 +63,7 @@ export class NativeSpeechToTextAdapter implements ISpeechToTextAdapter {
         (event) => {
           if (event.results && event.results.length > 0) {
             const transcript = event.results[0]?.transcript || '';
-            if (transcript.trim().length > 0 && event.isFinal) {
+            if (transcript.trim().length > 0) {
               onResult(transcript);
             }
           }
