@@ -459,7 +459,7 @@ export class SonoraAIOrchestrator {
         }
 
         default: {
-          // Fallback to active AI Provider for natural language interaction
+          // Dynamic interaction via Google Gemini AI
           const provider = ProviderFactory.getInstance().getProvider();
           const aiResponse = await provider.generateResponse(
             this.contextManager.getTurns(),
@@ -477,9 +477,66 @@ export class SonoraAIOrchestrator {
               timestamp: Date.now(),
             };
             this.contextManager.addTurn(toolResultTurn);
+
+            // Synthesize the natural spoken outcome of the executed tool
+            let outcomeText = '';
+            if (toolCall.name === 'createWallet') {
+              if (toolResult.error) {
+                outcomeText = `Sorry, I encountered an issue creating your wallet: ${toolResult.error}`;
+              } else {
+                const res = toolResult.result as { success?: boolean; funded?: boolean; publicKey?: string };
+                outcomeText = res.funded
+                  ? 'Congratulations! Your new non-custodial Stellar wallet has been created and funded with 10,000 test XLM on the Stellar Network! Your account is active. Would you like to check your balance, or write down your recovery phrase?'
+                  : 'Your new non-custodial Stellar wallet has been created successfully. Would you like to check your balance or verify your backup?';
+              }
+            } else if (toolCall.name === 'getBalances') {
+              if (toolResult.error) {
+                outcomeText = `Unable to retrieve your balance: ${toolResult.error}`;
+              } else {
+                const balances = toolResult.result as { nativeBalance: string; availableNativeBalance: string };
+                outcomeText = `Your total Stellar balance is ${ProactiveGuidance.formatAmountForSpeech(balances.nativeBalance, 'XLM')}, with ${ProactiveGuidance.formatAmountForSpeech(balances.availableNativeBalance, 'XLM')} available to spend.`;
+              }
+            } else if (toolCall.name === 'getReceivingAddress') {
+              if (toolResult.error) {
+                outcomeText = `Could not fetch address: ${toolResult.error}`;
+              } else {
+                const data = toolResult.result as { publicKey: string };
+                outcomeText = `Your Stellar receiving address is ${ProactiveGuidance.formatAddressForSpeech(data.publicKey)}. Your full address and QR code are displayed on screen.`;
+              }
+            } else if (toolCall.name === 'listContacts') {
+              const data = toolResult.result as { contacts: { name: string }[]; count: number };
+              outcomeText =
+                data.count === 0
+                  ? 'You do not have any saved contacts yet. You can add one by speaking their name and Stellar address.'
+                  : `You have ${data.count} saved contact${data.count === 1 ? '' : 's'}: ${data.contacts.map((c) => c.name).join(', ')}.`;
+            } else if (toolCall.name === 'getTransactionHistory') {
+              const data = toolResult.result as {
+                history: { type: string; amount?: string; assetCode?: string }[];
+                count: number;
+              };
+              outcomeText =
+                data.count === 0
+                  ? 'No recent transactions found on Stellar Testnet for your account.'
+                  : `Recent activity: ${data.history
+                      .map(
+                        (tx, idx) =>
+                          `${idx + 1}: ${tx.type === 'payment' ? 'Payment of ' + tx.amount + ' ' + (tx.assetCode || 'XLM') : tx.type}`
+                      )
+                      .join('. ')}.`;
+            }
+
+            if (outcomeText) {
+              await this.speak(outcomeText);
+              return {
+                text: outcomeText,
+                intent: (aiResponse.intent as any) || (toolCall.name as any) || 'general_query',
+                suggestedQuickReplies: ['Check Balance', 'Send XLM', 'My Address'],
+              };
+            }
           }
 
-          const responseText = aiResponse.text || "I'm here to help you manage your Stellar wallet. How can I assist you?";
+          const responseText =
+            aiResponse.text || "I'm here to help you manage your Stellar wallet. How can I assist you?";
           await this.speak(responseText);
           return {
             text: responseText,

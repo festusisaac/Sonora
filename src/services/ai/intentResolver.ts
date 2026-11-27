@@ -70,7 +70,7 @@ export class IntentResolver {
       return { intent: 'cancel', confidence: 1.0, entities: {}, rawText };
     }
 
-    // 2.5 Wallet Creation / Onboarding / Setup commands
+    // 2.5 Wallet Creation / Onboarding / Setup commands (Standard English & Colloquial patterns)
     if (
       text.includes('create wallet') ||
       text.includes('create a wallet') ||
@@ -87,9 +87,20 @@ export class IntentResolver {
       text.includes('setup wallet') ||
       text.includes('set up wallet') ||
       text.includes('open a wallet') ||
+      text.includes('open wallet') ||
+      text.includes('open account') ||
+      text.includes('open an account') ||
+      text.includes('make account') ||
       text.includes('generate wallet') ||
       text.includes('create account') ||
       text.includes('create my wallet') ||
+      text.includes('help me create') ||
+      text.includes('want to create') ||
+      text.includes('want create') ||
+      text.includes('wan create') ||
+      text.includes('get started') ||
+      text.includes('start a wallet') ||
+      text.includes('register') ||
       text === 'create' ||
       text.includes('start wallet') ||
       text.includes('create new wallet')
