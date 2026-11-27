@@ -15,6 +15,7 @@ import { useAIStore } from '../../store/aiStore';
 import { useWalletStore } from '../../store/walletStore';
 import { WalletCreationService } from '../wallet/walletCreationService';
 import { StellarTestnetFundingService } from '../stellar/stellarTestnetFundingService';
+import { ContactService } from '../contacts/contactService';
 
 export class SonoraAIOrchestrator {
   private static instance: SonoraAIOrchestrator;
@@ -523,6 +524,96 @@ export class SonoraAIOrchestrator {
                           `${idx + 1}: ${tx.type === 'payment' ? 'Payment of ' + tx.amount + ' ' + (tx.assetCode || 'XLM') : tx.type}`
                       )
                       .join('. ')}.`;
+            } else if (toolCall.name === 'preparePayment') {
+              const params = (toolCall.parameters || {}) as Record<string, string>;
+              const parsedEntities = IntentResolver.resolve(input).entities;
+              const recipient = params.recipient || parsedEntities.recipient;
+              const amount = params.amount || parsedEntities.amount;
+              const assetCode = (params.assetCode || parsedEntities.asset || 'XLM') as 'XLM' | 'USDC';
+              const memo = params.memo || parsedEntities.memo;
+
+              this.contextManager.startPaymentWorkflow({ recipient, amount, asset: assetCode, memo });
+              const currentDraft = this.contextManager.getDraft();
+
+              if (!currentDraft.recipient) {
+                const prompt = ProactiveGuidance.formatMissingFieldPrompt('recipient');
+                store.setWorkflowStep('collecting_payment_details');
+                await this.speak(prompt);
+                return {
+                  text: prompt,
+                  intent: 'send_payment',
+                  workflowState: 'collecting_payment_details',
+                  suggestedQuickReplies: ['To Amina', 'To David', 'Cancel'],
+                };
+              }
+
+              if (!currentDraft.amount) {
+                const prompt = ProactiveGuidance.formatMissingFieldPrompt('amount');
+                store.setWorkflowStep('collecting_payment_details');
+                await this.speak(prompt);
+                return {
+                  text: prompt,
+                  intent: 'send_payment',
+                  workflowState: 'collecting_payment_details',
+                  suggestedQuickReplies: ['5 XLM', '10 XLM', 'Cancel'],
+                };
+              }
+
+              return await this.executePaymentPreparation(activePublicKey);
+            } else if (toolCall.name === 'findContact') {
+              const query = String(toolCall.parameters?.query || '');
+              const matches = await ContactService.findContacts(query);
+              if (matches.length === 1) {
+                const paymentEntities = IntentResolver.resolve(input).entities;
+                this.contextManager.startPaymentWorkflow({
+                  recipient: matches[0].address,
+                  recipientName: matches[0].name,
+                  amount: paymentEntities.amount,
+                  asset: paymentEntities.asset || 'XLM',
+                });
+                if (paymentEntities.amount) {
+                  return await this.executePaymentPreparation(activePublicKey);
+                } else {
+                  const prompt = `Selected ${matches[0].name}. How much would you like to send?`;
+                  store.setWorkflowStep('collecting_payment_details');
+                  await this.speak(prompt);
+                  return {
+                    text: prompt,
+                    intent: 'send_payment',
+                    workflowState: 'collecting_payment_details',
+                    suggestedQuickReplies: ['5 XLM', '10 XLM', 'Cancel'],
+                  };
+                }
+              } else if (matches.length > 1) {
+                const candidates = matches.map((c: { id: string; name: string; address: string }, i: number) => ({
+                  id: c.id,
+                  name: c.name,
+                  address: c.address,
+                  index: i + 1,
+                }));
+                this.contextManager.setDisambiguation(candidates);
+                store.setWorkflowStep('disambiguating_recipient');
+                const prompt = ProactiveGuidance.formatDisambiguationPrompt(candidates);
+                await this.speak(prompt);
+                return {
+                  text: prompt,
+                  intent: 'send_payment',
+                  workflowState: 'disambiguating_recipient',
+                };
+              } else {
+                outcomeText = `No contact found matching ${query}. You can say their Stellar address to send directly.`;
+              }
+            } else if (toolCall.name === 'addContact') {
+              const name = String(toolCall.parameters?.name || '');
+              const address = String(toolCall.parameters?.address || '');
+              if (name && address) {
+                await ContactService.addContact(name, address);
+                outcomeText = `Saved contact ${name} with address ${ProactiveGuidance.formatAddressForSpeech(address)}.`;
+              } else {
+                outcomeText = 'Please provide both a contact name and a valid Stellar G-address to save a contact.';
+              }
+            } else if (toolCall.name === 'getNetworkStatus') {
+              outcomeText = 'The Stellar Testnet is online, operational, and connected to SONORA.';
             }
 
             if (outcomeText) {
@@ -535,8 +626,10 @@ export class SonoraAIOrchestrator {
             }
           }
 
-          const responseText =
-            aiResponse.text || "I'm here to help you manage your Stellar wallet. How can I assist you?";
+          let responseText = aiResponse.text;
+          if (!responseText || responseText === 'Executing request...') {
+            responseText = "I'm here to help you manage your Stellar wallet. How can I assist you?";
+          }
           await this.speak(responseText);
           return {
             text: responseText,

@@ -39,15 +39,19 @@ export class GeminiGatewayClient {
       return this.generateFallbackResponse(request);
     }
 
-    const systemInstruction = `You are SONORA, a secure, voice-first Stellar wallet companion for blind and visually impaired users.
+    const systemInstruction = `You are SONORA, a secure, voice-first Stellar wallet companion designed specifically for blind and visually impaired users.
 SECURITY INVARIANTS:
 1. You NEVER sign transactions.
 2. You NEVER access private keys or recovery phrases.
 3. You NEVER authorize payments autonomously.
-4. When the user wants to create, setup, or onboard a new wallet, call the createWallet tool to register and fund them on the Stellar testnet.
-5. When the user wants to send a payment, help gather the recipient, amount, asset, and memo, then call the preparePayment function.
-6. If the recipient is ambiguous, ask the user to clarify.
-Provide short, spoken responses.`;
+4. When the user wants to create, open, set up, make, or onboard a new wallet or account in any words or phrasing, call the createWallet tool to register and fund them on the Stellar testnet.
+5. When the user asks about their money, balance, XLM, USDC, or funds in any phrasing or slang (e.g. "how much money do i have", "wetin dey my wallet"), call getBalances.
+6. When the user asks for their address, public key, QR code, deposit information, or how to receive funds, call getReceivingAddress.
+7. When the user wants to send, pay, transfer, or give money to someone (e.g. "send 5 XLM to David", "give Amina ten lumens"), call preparePayment with recipient, amount, and assetCode. If only a contact name is mentioned, you may call findContact or listContacts first.
+8. When the user asks about saved contacts, people in their address book, or who they can send money to, call listContacts.
+9. When the user asks about past transactions, recent activity, transfers, or spending history, call getTransactionHistory.
+10. When the user asks general questions about Stellar, blockchain, cryptocurrency, or accessibility, answer directly in concise, natural, warm spoken sentences (maximum 2-3 sentences).
+Always provide short, natural spoken responses suitable for speech synthesis.`;
 
     const functionDeclarations: FunctionDeclaration[] = (request.tools || []).map((t) => ({
       name: t.name,
@@ -110,7 +114,8 @@ Provide short, spoken responses.`;
         text: text.trim() || (toolCalls.length > 0 ? 'Executing request...' : ''),
         toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
       };
-    } catch {
+    } catch (err: unknown) {
+      console.warn('[GeminiGatewayClient] Gemini generation error, using fallback:', err instanceof Error ? err.message : err);
       return this.generateFallbackResponse(request);
     } finally {
       clearTimeout(timeout);
@@ -141,7 +146,13 @@ Provide short, spoken responses.`;
       };
     }
 
-    if (prompt.includes('balance')) {
+    if (
+      prompt.includes('balance') ||
+      prompt.includes('how much') ||
+      prompt.includes('funds') ||
+      prompt.includes('money') ||
+      prompt.includes('wetin dey')
+    ) {
       return {
         text: 'Checking your Stellar balance now.',
         toolCalls: [{ id: `mock-${Date.now()}`, name: 'getBalances', parameters: {} }],
@@ -149,7 +160,12 @@ Provide short, spoken responses.`;
       };
     }
 
-    if (prompt.includes('address') || prompt.includes('receive')) {
+    if (
+      prompt.includes('address') ||
+      prompt.includes('receive') ||
+      prompt.includes('qr') ||
+      prompt.includes('deposit')
+    ) {
       return {
         text: 'Fetching your Stellar receiving address.',
         toolCalls: [{ id: `mock-${Date.now()}`, name: 'getReceivingAddress', parameters: {} }],
@@ -157,8 +173,38 @@ Provide short, spoken responses.`;
       };
     }
 
+    if (prompt.includes('contact') || prompt.includes('address book') || prompt.includes('people')) {
+      return {
+        text: 'Checking your saved contacts.',
+        toolCalls: [{ id: `mock-${Date.now()}`, name: 'listContacts', parameters: {} }],
+        intent: 'list_contacts',
+      };
+    }
+
+    if (
+      prompt.includes('history') ||
+      prompt.includes('transactions') ||
+      prompt.includes('activity') ||
+      prompt.includes('spent') ||
+      prompt.includes('transfer')
+    ) {
+      return {
+        text: 'Retrieving your recent transactions.',
+        toolCalls: [{ id: `mock-${Date.now()}`, name: 'getTransactionHistory', parameters: { limit: 5 } }],
+        intent: 'view_history',
+      };
+    }
+
+    if (prompt.includes('send') || prompt.includes('pay') || prompt.includes('give')) {
+      return {
+        text: 'Preparing your payment.',
+        toolCalls: [{ id: `mock-${Date.now()}`, name: 'listContacts', parameters: {} }],
+        intent: 'send_payment',
+      };
+    }
+
     return {
-      text: 'I am your SONORA wallet companion. You can ask me to check your balance, send funds, or show your address.',
+      text: 'I am your SONORA wallet companion. You can ask me to check your balance, send funds, create a wallet, or view your history.',
       intent: 'general_query',
     };
   }

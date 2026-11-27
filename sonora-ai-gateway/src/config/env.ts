@@ -7,7 +7,7 @@ const envSchema = z.object({
   PORT: z.coerce.number().default(3001),
   HOST: z.string().default('0.0.0.0'),
   GEMINI_API_KEY: z.string().default(''),
-  GEMINI_MODEL: z.string().default('gemini-1.5-flash'),
+  GEMINI_MODEL: z.string().default('gemini-flash-lite-latest'),
   GEMINI_REQUEST_TIMEOUT: z.coerce.number().default(15000),
   GEMINI_MAX_OUTPUT_TOKENS: z.coerce.number().default(1024),
   GATEWAY_AUTH_TOKEN: z.string().default('sonora_dev_secret_auth_token_replace_in_prod'),
