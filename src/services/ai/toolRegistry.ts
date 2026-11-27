@@ -12,6 +12,14 @@ import { ToolDefinition } from './aiTypes';
  */
 export const WALLET_TOOLS: ToolDefinition[] = [
   {
+    name: 'createWallet',
+    description: 'Create and register a brand new non-custodial Stellar wallet on the Stellar Testnet and fund it with 10,000 test XLM.',
+    parameters: {
+      type: 'object',
+      properties: {},
+    },
+  },
+  {
     name: 'getAccountDetails',
     description: 'Retrieve Stellar account details such as public key, sequence number, and subentry count.',
     parameters: {

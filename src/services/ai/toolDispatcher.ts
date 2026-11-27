@@ -14,6 +14,9 @@ import { getHorizonServer } from '../stellar/client';
 import { AssetIdentifier, MemoDetails } from '../../types/transaction.types';
 import { stroopsToDecimal } from '../../utils/stroop';
 import { useTransactionStore } from '../../store/transactionStore';
+import { useWalletStore } from '../../store/walletStore';
+import { WalletCreationService } from '../wallet/walletCreationService';
+import { StellarTestnetFundingService } from '../stellar/stellarTestnetFundingService';
 
 /**
  * Forbidden Tools Blocklist
@@ -87,6 +90,32 @@ export class ToolDispatcher {
     const params = toolCall.parameters || {};
 
     switch (toolCall.name) {
+      case 'createWallet': {
+        const creation = await WalletCreationService.createWallet();
+        let funded = false;
+        try {
+          const fundRes = await StellarTestnetFundingService.fundAccount(creation.publicKey);
+          funded = Boolean(fundRes.success);
+        } catch {
+          // Funding can be retried if Friendbot is congested
+        }
+        const wStore = useWalletStore.getState();
+        wStore.setPublicKey(creation.publicKey);
+        wStore.setBackedUp(false);
+        if (funded) {
+          wStore.setBalances([
+            {
+              code: 'XLM',
+              balance: '10000.0000000',
+            },
+          ]);
+        }
+        return {
+          success: true,
+          publicKey: creation.publicKey,
+          funded,
+        };
+      }
       case 'getAccountDetails': {
         const pubKey = (params.publicKey as string) || activePublicKey;
         if (!pubKey) {

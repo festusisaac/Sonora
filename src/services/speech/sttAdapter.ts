@@ -73,6 +73,10 @@ export class NativeSpeechToTextAdapter implements ISpeechToTextAdapter {
       this.errorSubscription = ExpoSpeechRecognitionModule.addListener(
         'error',
         (event) => {
+          // Silence or pause timeouts in standby mode are normal; ignore so standby stays alive
+          if (event.error === 'no-speech' || event.error === 'speech-timeout') {
+            return;
+          }
           onError(new Error(event.message || 'Speech recognition error'));
         }
       );
@@ -81,6 +85,7 @@ export class NativeSpeechToTextAdapter implements ISpeechToTextAdapter {
         lang: 'en-US',
         interimResults: false,
         maxAlternatives: 1,
+        continuous: true,
       });
     } catch (err: unknown) {
       const error =

@@ -29,6 +29,7 @@ export interface ConversationTurn {
 }
 
 export type AIIntent =
+  | 'create_wallet'
   | 'check_balance'
   | 'send_payment'
   | 'receive_funds'

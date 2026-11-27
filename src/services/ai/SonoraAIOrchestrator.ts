@@ -12,13 +12,21 @@ import { ConversationContextManager } from './contextManager';
 import { ProactiveGuidance } from './proactiveGuidance';
 import { TTSService } from '../speech/tts';
 import { useAIStore } from '../../store/aiStore';
+import { useWalletStore } from '../../store/walletStore';
+import { WalletCreationService } from '../wallet/walletCreationService';
+import { StellarTestnetFundingService } from '../stellar/stellarTestnetFundingService';
 
 export class SonoraAIOrchestrator {
   private static instance: SonoraAIOrchestrator;
   private contextManager: ConversationContextManager;
+  private onSpeakingDone?: () => void;
 
   private constructor() {
     this.contextManager = new ConversationContextManager();
+  }
+
+  public setOnSpeakingDone(cb: (() => void) | undefined): void {
+    this.onSpeakingDone = cb;
   }
 
   public static getInstance(): SonoraAIOrchestrator {
@@ -250,6 +258,64 @@ export class SonoraAIOrchestrator {
 
       // 5. Handling New Intent Resolution
       switch (resolution.intent) {
+        case 'create_wallet': {
+          const currentPk = activePublicKey || useWalletStore.getState().publicKey;
+          if (currentPk) {
+            const existingMsg = `You already have an active Stellar wallet. Your public key starts with ${currentPk.slice(0, 4)} and ends with ${currentPk.slice(-4)}. You can ask me to check your balance, send payments, or view your history.`;
+            await this.speak(existingMsg);
+            return {
+              text: existingMsg,
+              intent: 'create_wallet',
+              suggestedQuickReplies: ['Check Balance', 'Send XLM', 'My Address'],
+            };
+          }
+
+          const creatingMsg = 'Creating your new non-custodial Stellar wallet and setting up your account on the Stellar Network...';
+          await this.speak(creatingMsg);
+
+          try {
+            const creation = await WalletCreationService.createWallet();
+            let fundingSuccess = false;
+            try {
+              const fundRes = await StellarTestnetFundingService.fundAccount(creation.publicKey);
+              fundingSuccess = Boolean(fundRes.success);
+            } catch {
+              // Funding can be retried if Friendbot is congested
+            }
+
+            const wStore = useWalletStore.getState();
+            wStore.setPublicKey(creation.publicKey);
+            wStore.setBackedUp(false);
+            if (fundingSuccess) {
+              wStore.setBalances([
+                {
+                  code: 'XLM',
+                  balance: '10000.0000000',
+                },
+              ]);
+            }
+
+            const welcomeDone = fundingSuccess
+              ? 'Congratulations! Your new Stellar wallet has been created and funded with 10,000 test XLM on the Stellar Network. Your wallet is active. Would you like to check your balance, or write down your recovery phrase?'
+              : 'Your new Stellar wallet has been created successfully. Your account is active. Would you like to check your balance, or write down your recovery phrase?';
+
+            await this.speak(welcomeDone);
+            return {
+              text: welcomeDone,
+              intent: 'create_wallet',
+              suggestedQuickReplies: ['Check Balance', 'My Address', 'History'],
+            };
+          } catch (err: unknown) {
+            const errorMsg = `Sorry, I encountered an issue creating your wallet: ${err instanceof Error ? err.message : 'Unknown error'}. Please try again.`;
+            await this.speak(errorMsg);
+            return {
+              text: errorMsg,
+              intent: 'create_wallet',
+              suggestedQuickReplies: ['Try Again', 'Help'],
+            };
+          }
+        }
+
         case 'check_balance': {
           const toolResult = await ToolDispatcher.executeToolCall(
             { id: `call-${Date.now()}`, name: 'getBalances', parameters: {} },
@@ -540,8 +606,15 @@ export class SonoraAIOrchestrator {
     try {
       await TTSService.speak(text, {
         rate: store.speechSpeed,
-        onDone: () => store.setAssistantState('idle'),
-        onError: () => store.setAssistantState('idle'),
+        onDone: () => {
+          store.setAssistantState('idle');
+          if (this.onSpeakingDone) {
+            this.onSpeakingDone();
+          }
+        },
+        onError: () => {
+          store.setAssistantState('idle');
+        },
       });
     } catch {
       store.setAssistantState('idle');

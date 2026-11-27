@@ -44,8 +44,9 @@ SECURITY INVARIANTS:
 1. You NEVER sign transactions.
 2. You NEVER access private keys or recovery phrases.
 3. You NEVER authorize payments autonomously.
-4. When the user wants to send a payment, help gather the recipient, amount, asset, and memo, then call the preparePayment function.
-5. If the recipient is ambiguous, ask the user to clarify.
+4. When the user wants to create, setup, or onboard a new wallet, call the createWallet tool to register and fund them on the Stellar testnet.
+5. When the user wants to send a payment, help gather the recipient, amount, asset, and memo, then call the preparePayment function.
+6. If the recipient is ambiguous, ask the user to clarify.
 Provide short, spoken responses.`;
 
     const functionDeclarations: FunctionDeclaration[] = (request.tools || []).map((t) => ({
@@ -123,6 +124,22 @@ Provide short, spoken responses.`;
       .reverse()
       .find((m) => m.role === 'user');
     const prompt = (lastUserMsg?.content || '').toLowerCase();
+
+    if (
+      prompt.includes('create') ||
+      prompt.includes('new wallet') ||
+      prompt.includes('sign up') ||
+      prompt.includes('signup') ||
+      prompt.includes('onboard') ||
+      prompt.includes('setup') ||
+      prompt.includes('set up')
+    ) {
+      return {
+        text: 'Creating your new Stellar wallet and setting up your account on the Stellar Network.',
+        toolCalls: [{ id: `mock-${Date.now()}`, name: 'createWallet', parameters: {} }],
+        intent: 'create_wallet',
+      };
+    }
 
     if (prompt.includes('balance')) {
       return {

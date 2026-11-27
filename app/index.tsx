@@ -33,40 +33,43 @@ export default function HomeScreen() {
   } = useSonoraAssistant();
 
   const { publicKey } = useWalletStore();
-  const [announcement, setAnnouncement] = useState<string>('');
+  const [announcement] = useState<string>('');
   const insets = useSafeAreaInsets();
 
-  // Spoken greeting on first launch
+  // Spoken greeting on first launch with automatic hands-free standby listening
   useEffect(() => {
     let isMounted = true;
-    const timer = setTimeout(() => {
+    const timer = setTimeout(async () => {
       if (isMounted) {
         const welcomeSpeech = publicKey
-          ? 'Welcome to SONORA. Tap the center orb to speak.'
-          : 'Welcome to SONORA. Your voice-first Stellar wallet. Tap the center orb to begin.';
-        setAnnouncement(welcomeSpeech);
-        TTSService.speak(welcomeSpeech).catch(() => {});
+          ? 'Welcome to SONORA. I am on standby and listening. How can I help you today?'
+          : 'Welcome to SONORA. You do not have an active wallet yet. Say: create a wallet, to get started on the Stellar Network.';
+
+        await TTSService.speak(welcomeSpeech, {
+          onDone: () => {
+            if (isMounted) {
+              startListening().catch(() => {});
+            }
+          },
+        }).catch(() => {});
       }
-    }, 400);
+    }, 500);
 
     return () => {
       isMounted = false;
       clearTimeout(timer);
     };
-  }, [publicKey]);
+  }, [publicKey, startListening]);
 
   const handleOrbPress = async () => {
     if (assistantState === 'speaking') {
       await stopSpeaking();
-      setAnnouncement('Voice stopped.');
       return;
     }
 
     if (assistantState === 'listening') {
       await stopListening();
-      setAnnouncement('Processing your request…');
     } else {
-      setAnnouncement('Listening now. Please speak.');
       await startListening();
     }
   };

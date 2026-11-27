@@ -70,6 +70,33 @@ export class IntentResolver {
       return { intent: 'cancel', confidence: 1.0, entities: {}, rawText };
     }
 
+    // 2.5 Wallet Creation / Onboarding / Setup commands
+    if (
+      text.includes('create wallet') ||
+      text.includes('create a wallet') ||
+      text.includes('make a wallet') ||
+      text.includes('make wallet') ||
+      text.includes('new wallet') ||
+      text.includes('sign me up') ||
+      text.includes('signup') ||
+      text.includes('sign up') ||
+      text.includes('onboard me') ||
+      text.includes('onboard') ||
+      text.includes('set up a wallet') ||
+      text.includes('setup a wallet') ||
+      text.includes('setup wallet') ||
+      text.includes('set up wallet') ||
+      text.includes('open a wallet') ||
+      text.includes('generate wallet') ||
+      text.includes('create account') ||
+      text.includes('create my wallet') ||
+      text === 'create' ||
+      text.includes('start wallet') ||
+      text.includes('create new wallet')
+    ) {
+      return { intent: 'create_wallet', confidence: 1.0, entities: {}, rawText };
+    }
+
     // 3. Repeat commands
     if (
       text === 'repeat' ||

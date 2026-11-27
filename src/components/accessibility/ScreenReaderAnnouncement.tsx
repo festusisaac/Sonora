@@ -18,7 +18,7 @@ export const ScreenReaderAnnouncement: React.FC<ScreenReaderAnnouncementProps> =
   return (
     <View
       accessible={true}
-      accessibilityLiveRegion="assertive"
+      accessibilityLiveRegion="polite"
       style={styles.srOnly}
     >
       <Text>{message}</Text>

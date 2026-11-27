@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 import { useAIStore } from '../store/aiStore';
 import { useWalletStore } from '../store/walletStore';
 import { SonoraAIOrchestrator } from '../services/ai/SonoraAIOrchestrator';
@@ -21,6 +21,7 @@ export function useSonoraAssistant() {
 
   const { publicKey } = useWalletStore();
   const sttAdapter = getSpeechToTextAdapter();
+  const startListeningRef = useRef<() => Promise<void>>(async () => {});
 
   const processUserInput = useCallback(
     async (input: string) => {
@@ -32,6 +33,13 @@ export function useSonoraAssistant() {
 
   const startListening = useCallback(async () => {
     try {
+      const orchestrator = SonoraAIOrchestrator.getInstance();
+      orchestrator.setOnSpeakingDone(() => {
+        setTimeout(() => {
+          startListeningRef.current().catch(() => {});
+        }, 350);
+      });
+
       // If currently speaking, stop first
       await TTSService.stop();
       await HapticsService.impactMedium();
@@ -52,8 +60,13 @@ export function useSonoraAssistant() {
     }
   }, [sttAdapter, processUserInput, setAssistantState]);
 
+  useEffect(() => {
+    startListeningRef.current = startListening;
+  }, [startListening]);
+
   const stopListening = useCallback(async () => {
     try {
+      SonoraAIOrchestrator.getInstance().setOnSpeakingDone(undefined);
       await sttAdapter.stopListening();
     } finally {
       setAssistantState('idle');
@@ -61,6 +74,7 @@ export function useSonoraAssistant() {
   }, [sttAdapter, setAssistantState]);
 
   const stopSpeaking = useCallback(async () => {
+    SonoraAIOrchestrator.getInstance().setOnSpeakingDone(undefined);
     await TTSService.stop();
     setAssistantState('idle');
   }, [setAssistantState]);
